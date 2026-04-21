@@ -7,7 +7,7 @@
 ![Hugging Face](https://img.shields.io/badge/🤗%20Hugging%20Face-Free%20API-orange)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-ML%20Powered-f7931e?logo=scikit-learn&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green)
-![Live Demo]([https://img.shields.io/badge/Live%20Demo-Hugging%20Face%20Spaces-yellow](https://huggingface.co/spaces/sharmasai12/AI-SMART-RESUME-BUILDER))
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Hugging%20Face%20Spaces-yellow)](https://huggingface.co/spaces/sharmasai12/AI-SMART-RESUME-BUILDER)
 
 **An AI-powered resume analysis, building, and optimization platform for job seekers and recruiters.**
 
@@ -63,7 +63,7 @@
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/YOUR_USERNAME/Smart-AI-Resume-Builder.git
+git clone https://github.com/sharmasai12/Smart-AI-Resume-Builder.git
 cd Smart-AI-Resume-Builder
 ```
 
@@ -181,7 +181,7 @@ Smart-AI-Resume-Builder/
 
 The app is deployed on **Hugging Face Spaces**.
 
-👉 **[Try the Live Demo](https://huggingface.co/spaces/YOUR_USERNAME/Smart-AI-Resume-Builder)**
+👉 **[Try the Live Demo](https://huggingface.co/spaces/sharmasai12/AI-SMART-RESUME-BUILDER)**
 
 ---
 
