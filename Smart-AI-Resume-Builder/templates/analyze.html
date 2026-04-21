@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}ATS Analyzer — ResumeLens AI{% endblock %}
+{% block content %}
+
+<div class="dash-header">
+  <div>
+    <h1><span class="grad">ATS Analyzer</span></h1>
+    <p class="dim">Upload your resume and get instant compatibility scoring.</p>
+  </div>
+</div>
+
+<div class="analyzer-layout">
+  <!-- Upload form -->
+  <div class="glass-card">
+    <h3 class="card-title"><i class="fas fa-upload"></i> Upload Resume</h3>
+    <form id="aForm" action="{{ url_for('analyze_post') }}" method="POST" enctype="multipart/form-data">
+
+      <div class="fg">
+        <label>Job Category <span class="hint">(optional)</span></label>
+        <div class="sel-wrap">
+          <select class="fsel" id="catSel" name="category">
+            {% for c in categories %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+          </select>
+          <i class="fas fa-chevron-down sel-ico"></i>
+        </div>
+      </div>
+
+      <div class="fg" id="roleBox" style="display:none">
+        <label>Specific Role</label>
+        <div class="sel-wrap">
+          <select class="fsel" id="roleSel" name="role">
+            <option value="None">None</option>
+          </select>
+          <i class="fas fa-chevron-down sel-ico"></i>
+        </div>
+      </div>
+
+      <div class="fg">
+        <label>Resume File <span class="req">*</span></label>
+        <div class="dropzone" id="dz" onclick="document.getElementById('fi').click()">
+          <input type="file" id="fi" name="resume" accept=".pdf,.docx" required style="display:none"/>
+          <div id="dzIdle">
+            <div class="dz-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+            <p class="dz-main">Drop your resume here</p>
+            <p class="dz-sub">or <span class="dz-link">browse files</span></p>
+            <p class="dz-hint">PDF or DOCX · Max 10 MB</p>
+          </div>
+          <div id="dzSel" class="hidden">
+            <div class="file-row">
+              <i class="fas fa-file-alt"></i>
+              <div class="file-info">
+                <span id="fName"></span>
+                <span id="fSize" class="dim"></span>
+              </div>
+              <button type="button" id="fRm" class="rm-btn"><i class="fas fa-times"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="glow-btn w100" type="submit" id="subBtn">
+        <i class="fas fa-search"></i>
+        <span id="subTxt">Analyze Resume</span>
+      </button>
+    </form>
+  </div>
+
+  <!-- Tips panel -->
+  <div class="side-col">
+    <div class="glass-card tips-card">
+      <h4><i class="fas fa-lightbulb text-warning"></i> Tips for Better Scores</h4>
+      <ul class="tips-list">
+        <li><i class="fas fa-check"></i> Use standard section headings (Experience, Education, Skills)</li>
+        <li><i class="fas fa-check"></i> Include quantified achievements (e.g., "improved by 30%")</li>
+        <li><i class="fas fa-check"></i> Match keywords from the target job description</li>
+        <li><i class="fas fa-check"></i> Avoid tables, images, and graphics — ATS can't read them</li>
+        <li><i class="fas fa-check"></i> Include complete contact info with LinkedIn</li>
+      </ul>
+    </div>
+    <div class="glass-card">
+      <h4><i class="fas fa-shield-alt text-success"></i> Privacy Notice</h4>
+      <p class="dim" style="font-size:.85rem;line-height:1.6">Your resume is analyzed in memory and permanently deleted immediately after. We never store or share your document.</p>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const cat=document.getElementById("catSel"),rb=document.getElementById("roleBox"),rs=document.getElementById("roleSel");
+cat.addEventListener("change",function(){
+  if(this.value==="None"){rb.style.display="none";return;}
+  fetch(`/get_roles?category=${encodeURIComponent(this.value)}`).then(r=>r.json()).then(roles=>{
+    rs.innerHTML='<option value="None">None</option>';
+    roles.forEach(r=>{const o=document.createElement("option");o.value=r;o.textContent=r;rs.appendChild(o);});
+    rb.style.display="";
+  });
+});
+const fi=document.getElementById("fi"),dz=document.getElementById("dz"),dzI=document.getElementById("dzIdle"),dzS=document.getElementById("dzSel");
+function showF(f){document.getElementById("fName").textContent=f.name;document.getElementById("fSize").textContent=(f.size/1024).toFixed(1)+" KB";dzS.classList.remove("hidden");dzI.style.display="none";}
+fi.addEventListener("change",function(){if(this.files[0])showF(this.files[0]);});
+document.getElementById("fRm").addEventListener("click",function(e){e.stopPropagation();fi.value="";dzS.classList.add("hidden");dzI.style.display="";});
+dz.addEventListener("dragover",e=>{e.preventDefault();dz.classList.add("dz-over");});
+dz.addEventListener("dragleave",()=>dz.classList.remove("dz-over"));
+dz.addEventListener("drop",e=>{e.preventDefault();dz.classList.remove("dz-over");const f=e.dataTransfer.files[0];if(f){const dt=new DataTransfer();dt.items.add(f);fi.files=dt.files;showF(f);}});
+document.getElementById("aForm").addEventListener("submit",function(){const b=document.getElementById("subBtn");document.getElementById("subTxt").textContent="Analyzing…";b.disabled=true;});
+</script>
+{% endblock %}

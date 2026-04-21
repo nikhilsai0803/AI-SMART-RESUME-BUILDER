@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>{% block title %}ResumeLens AI{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet"/>
+</head>
+<body>
+
+<!-- ── NAVBAR ── -->
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a class="brand" href="{{ url_for('index') }}">
+      <div class="brand-mark"><span class="brand-gem"></span></div>
+      Resume<span class="brand-accent">Lens</span>
+    </a>
+
+    <div class="nav-links" id="navLinks">
+      {% if current_user.is_authenticated %}
+        <a href="{{ url_for('dashboard') if current_user.role == 'user' else url_for('recruiter') }}"
+           class="nav-link">
+          <i class="fas fa-th-large"></i> Dashboard
+        </a>
+        <div class="nav-divider"></div>
+        <div class="nav-user-chip" onclick="toggleUserMenu()">
+          <div class="user-avatar">{{ current_user.full_name[0]|upper }}</div>
+          <span class="user-chip-name">{{ current_user.full_name.split()[0] }}</span>
+          <i class="fas fa-chevron-down user-chip-arrow" id="userChevron"></i>
+          <div class="user-dropdown" id="userDropdown">
+            <div class="dropdown-header">
+              <span class="dropdown-name">{{ current_user.full_name }}</span>
+              <span class="dropdown-role badge-role-{{ current_user.role }}">{{ current_user.role|capitalize }}</span>
+            </div>
+            <a href="{{ url_for('profile') }}" class="dropdown-item"><i class="fas fa-user-circle"></i> Profile</a>
+            <a href="{{ url_for('logout') }}" class="dropdown-item dropdown-danger"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+          </div>
+        </div>
+      {% else %}
+        <a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint=='index' %}active{% endif %}">Home</a>
+        <a href="#features" class="nav-link">Features</a>
+        <a href="{{ url_for('about') }}" class="nav-link {% if request.endpoint=='about' %}active{% endif %}">About</a>
+        <div class="nav-divider"></div>
+        <a href="{{ url_for('login') }}" class="nav-link">Sign In</a>
+        <a href="{{ url_for('signup') }}" class="nav-cta-btn">Get Started <i class="fas fa-arrow-right"></i></a>
+      {% endif %}
+    </div>
+
+    <button class="nav-burger" id="navBurger" onclick="toggleMobileNav()">
+      <i class="fas fa-bars"></i>
+    </button>
+  </div>
+</nav>
+
+<!-- ── FLASH MESSAGES ── -->
+<div class="flashes" id="flashes">
+  {% with msgs = get_flashed_messages(with_categories=true) %}
+    {% if msgs %}
+      {% for cat, msg in msgs %}
+      <div class="flash flash-{{ cat }}">
+        <i class="fas fa-{% if cat=='error' %}exclamation-circle{% elif cat=='warning' %}triangle-exclamation{% elif cat=='success' %}circle-check{% else %}circle-info{% endif %}"></i>
+        <span>{{ msg }}</span>
+        <button onclick="this.parentElement.remove()" aria-label="Dismiss">&times;</button>
+      </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+</div>
+
+<!-- ── LAYOUT ── -->
+{% if current_user.is_authenticated %}
+<div class="app-shell">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <div class="sidebar-avatar">{{ current_user.full_name[0]|upper }}</div>
+      <div class="sidebar-user-info">
+        <span class="sidebar-name">{{ current_user.full_name }}</span>
+        <span class="sidebar-role badge-role-{{ current_user.role }}">{{ current_user.role|capitalize }}</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      {% if current_user.role == 'user' %}
+
+        <!-- ── Job Seeker Navigation ──────────────────────────────── -->
+        <a href="{{ url_for('dashboard') }}"
+           class="sidebar-link {% if request.endpoint=='dashboard' %}active{% endif %}">
+          <i class="fas fa-th-large"></i><span>Dashboard</span>
+        </a>
+
+        <a href="{{ url_for('analyze') }}"
+           class="sidebar-link {% if request.endpoint in ['analyze','analyze_post','result'] %}active{% endif %}">
+          <i class="fas fa-file-search"></i><span>ATS Analyzer</span>
+        </a>
+
+        <a href="{{ url_for('builder') }}"
+           class="sidebar-link {% if request.endpoint in ['builder','builder_post'] %}active{% endif %}">
+          <i class="fas fa-file-alt"></i><span>Resume Builder</span>
+        </a>
+
+        <a href="{{ url_for('ai_questions') }}"
+           class="sidebar-link {% if request.endpoint=='ai_questions' %}active{% endif %}">
+          <i class="fas fa-robot"></i><span>AI Questions</span>
+        </a>
+
+        <!-- ── AI Enhancement Features ────────────────────────────── -->
+        <div class="sidebar-section-label">AI Features</div>
+
+        <a href="{{ url_for('ai_feedback') }}"
+           class="sidebar-link {% if request.endpoint=='ai_feedback' %}active{% endif %}">
+          <i class="fas fa-brain"></i><span>Smart Feedback</span>
+        </a>
+
+        <a href="{{ url_for('skill_gap') }}"
+           class="sidebar-link {% if request.endpoint=='skill_gap' %}active{% endif %}">
+          <i class="fas fa-chart-network"></i><span>Skill Gap</span>
+        </a>
+
+        <a href="{{ url_for('smart_questions') }}"
+           class="sidebar-link {% if request.endpoint=='smart_questions' %}active{% endif %}">
+          <i class="fas fa-comments-question"></i><span>Smart Questions</span>
+        </a>
+
+        <a href="{{ url_for('rewrite') }}"
+           class="sidebar-link {% if request.endpoint=='rewrite' %}active{% endif %}">
+          <i class="fas fa-pen-to-square"></i><span>Rewrite Help</span>
+        </a>
+
+        <a href="{{ url_for('role_optimizer') }}"
+           class="sidebar-link {% if request.endpoint=='role_optimizer' %}active{% endif %}">
+          <i class="fas fa-crosshairs"></i><span>Role Optimizer</span>
+        </a>
+
+        <a href="{{ url_for('job_search') }}"
+           class="sidebar-link {% if request.endpoint=='job_search' %}active{% endif %}">
+          <i class="fas fa-search"></i><span>Job Search</span>
+        </a>
+
+        <a href="{{ url_for('feedback') }}"
+           class="sidebar-link {% if request.endpoint in ['feedback','feedback_post'] %}active{% endif %}">
+          <i class="fas fa-comment-dots"></i><span>Feedback</span>
+        </a>
+
+        <a href="{{ url_for('about') }}"
+           class="sidebar-link {% if request.endpoint=='about' %}active{% endif %}">
+          <i class="fas fa-info-circle"></i><span>About</span>
+        </a>
+
+      {% else %}
+
+        <!-- ── Recruiter Navigation ───────────────────────────────── -->
+        <a href="{{ url_for('recruiter') }}"
+           class="sidebar-link {% if request.endpoint=='recruiter' %}active{% endif %}">
+          <i class="fas fa-th-large"></i><span>Dashboard</span>
+        </a>
+
+        <a href="{{ url_for('recruiter') }}"
+           class="sidebar-link {% if request.endpoint in ['recruiter','rec_screen'] %}active{% endif %}">
+          <i class="fas fa-users"></i><span>Screen Candidates</span>
+        </a>
+
+        <a href="{{ url_for('about') }}"
+           class="sidebar-link {% if request.endpoint=='about' %}active{% endif %}">
+          <i class="fas fa-info-circle"></i><span>About</span>
+        </a>
+
+      {% endif %}
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="{{ url_for('profile') }}"
+         class="sidebar-link {% if request.endpoint=='profile' %}active{% endif %}">
+        <i class="fas fa-user-cog"></i><span>Profile</span>
+      </a>
+      <a href="{{ url_for('logout') }}" class="sidebar-link sidebar-logout">
+        <i class="fas fa-sign-out-alt"></i><span>Sign Out</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- Overlay for mobile sidebar -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+  <main class="page-content" id="pageContent">{% block content %}{% endblock %}</main>
+</div>
+{% else %}
+<main class="main-wrap">{% block public_content %}{% block content2 %}{% endblock %}{% endblock %}</main>
+{% endif %}
+
+{% if not current_user.is_authenticated %}
+<footer class="site-footer">
+  <div class="footer-brand">
+    <div class="brand-mark"><span class="brand-gem"></span></div>
+    <span>ResumeLens AI</span>
+  </div>
+  <span class="footer-copy">© 2025 · Built with <i class="fas fa-heart" style="color:#f472b6"></i> using Flask</span>
+  <div class="footer-links">
+    <a href="{{ url_for('about') }}">About</a>
+    <a href="{{ url_for('login') }}">Sign In</a>
+    <a href="{{ url_for('signup') }}">Sign Up</a>
+  </div>
+</footer>
+{% endif %}
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}Recruiter Portal — ResumeLens AI{% endblock %}
+{% block content %}
+
+<div class="dash-header">
+  <div>
+    <h1><span class="grad">Candidate Screening</span></h1>
+    <p class="dim">Screen, rank, and shortlist candidates at scale using AI criteria matching.</p>
+  </div>
+</div>
+
+<div class="rec-layout">
+
+  <!-- Upload + Criteria Panel -->
+  <div class="glass-card rec-panel">
+    <h3 class="card-title"><i class="fas fa-filter"></i> Screening Criteria</h3>
+    <form id="recForm" action="{{ url_for('rec_screen') }}" method="POST" enctype="multipart/form-data">
+
+      <div class="fg">
+        <label>Job Criteria <span class="hint">(optional)</span></label>
+        <textarea class="finput ftextarea" name="criteria" rows="4"
+          placeholder="E.g.: Bachelors 60%, Masters 7.0, python, java&#10;Or: ATS score above 70"></textarea>
+        <p class="input-hint"><i class="fas fa-info-circle"></i> Supports: education levels, skill names, ATS threshold</p>
+      </div>
+
+      <div class="fg">
+        <label>Upload Resumes <span class="req">*</span></label>
+        <div class="dropzone multi-drop" id="mdz" onclick="document.getElementById('mfi').click()">
+          <input type="file" id="mfi" name="resumes" accept=".pdf,.docx" multiple required style="display:none"/>
+          <div id="mdzI">
+            <div class="dz-icon"><i class="fas fa-file-upload"></i></div>
+            <p class="dz-main">Drop multiple resumes here</p>
+            <p class="dz-sub">or <span class="dz-link">browse files</span></p>
+            <p class="dz-hint">PDF or DOCX · Multiple files allowed</p>
+          </div>
+          <div id="mdzS" class="hidden">
+            <i class="fas fa-check-circle" style="color:#4ade80;font-size:1.5rem"></i>
+            <p id="mfCount" class="dz-main"></p>
+            <button type="button" id="mfRm" class="rm-btn" onclick="clearFiles(event)"><i class="fas fa-times"></i> Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <button class="glow-btn w100" type="submit" id="recBtn">
+        <i class="fas fa-search"></i>
+        <span id="recTxt">Screen Candidates</span>
+      </button>
+    </form>
+
+    <div class="criteria-guide">
+      <p class="guide-title"><i class="fas fa-book-open"></i> Criteria Examples</p>
+      <code>Bachelors 60%, python, react</code>
+      <code>Masters 7.0 gpa, java, aws</code>
+      <code>ATS score above 70</code>
+      <code>Bachelors 65% python django mysql</code>
+    </div>
+  </div>
+
+  <!-- Results Panel -->
+  <div class="rec-results">
+    {% if candidates %}
+    <div class="rec-stats">
+      {% set total=candidates|length %}
+      {% set short=candidates|selectattr("ok")|list|length %}
+      <div class="stat-chip"><span class="stat-n">{{ total }}</span><span>Total</span></div>
+      <div class="stat-chip stat-green"><span class="stat-n">{{ short }}</span><span>Shortlisted</span></div>
+      <div class="stat-chip stat-dim"><span class="stat-n">{{ total-short }}</span><span>Not Selected</span></div>
+      <a href="{{ url_for('rec_export') }}" class="outline-btn ms-auto">
+        <i class="fas fa-download"></i> Export CSV
+      </a>
+    </div>
+
+    <div class="rec-tabs">
+      <button class="rec-tab active" onclick="filterCands('all',this)">All ({{ total }})</button>
+      <button class="rec-tab" onclick="filterCands('short',this)">Shortlisted ({{ short }})</button>
+      <button class="rec-tab" onclick="filterCands('not',this)">Not Selected ({{ total-short }})</button>
+    </div>
+
+    <div class="cand-list" id="candList">
+      {% for c in candidates %}
+      <div class="cand-card {% if c.ok %}cand-ok{% else %}cand-no{% endif %}" data-ok="{{ 'yes' if c.ok else 'no' }}">
+        <div class="cand-header">
+          <div class="cand-name">
+            <i class="fas fa-file-alt cand-file-ico"></i>
+            <span>{{ c.name }}</span>
+            {% if c.ok %}
+              <span class="tag tag-success">Shortlisted</span>
+            {% else %}
+              <span class="tag tag-muted">Not Selected</span>
+            {% endif %}
+          </div>
+          <div class="cand-scores">
+            <div class="mini-score">
+              <span class="ms-label">ATS</span>
+              <span class="ms-val text-{{ c.ats|score_color }}">{{ c.ats }}</span>
+            </div>
+            <div class="mini-score">
+              <span class="ms-label">Match</span>
+              <span class="ms-val text-{{ c.match|score_color }}">{{ c.match }}%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="cand-bars">
+          <div class="mini-bar-row">
+            <span>ATS Score</span>
+            <div class="mini-track"><div class="mini-fill bar-{{ c.ats|score_color }}" style="width:{{ [c.ats,100]|min }}%"></div></div>
+            <span>{{ c.ats }}</span>
+          </div>
+          <div class="mini-bar-row">
+            <span>Match</span>
+            <div class="mini-track"><div class="mini-fill bar-{{ c.match|score_color }}" style="width:{{ c.match }}%"></div></div>
+            <span>{{ c.match }}%</span>
+          </div>
+        </div>
+
+        <div class="cand-badges">
+          <span class="cbadge {% if c.edu_met %}cbadge-ok{% else %}cbadge-no{% endif %}">
+            <i class="fas fa-{% if c.edu_met %}check{% else %}times{% endif %}"></i> Education
+          </span>
+          <span class="cbadge {% if c.sk_met %}cbadge-ok{% else %}cbadge-no{% endif %}">
+            <i class="fas fa-{% if c.sk_met %}check{% else %}times{% endif %}"></i> Skills
+          </span>
+          <span class="cbadge {% if c.ats_met %}cbadge-ok{% else %}cbadge-no{% endif %}">
+            <i class="fas fa-{% if c.ats_met %}check{% else %}times{% endif %}"></i> ATS
+          </span>
+        </div>
+
+        <details class="cand-detail">
+          <summary>View Details</summary>
+          <div class="detail-body">
+            <div class="detail-row"><span class="dim">Education</span><span>{{ c.edu }}</span></div>
+            <div class="detail-row"><span class="dim">Skills</span><span>{{ c.skills }}</span></div>
+          </div>
+        </details>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+      <i class="fas fa-inbox"></i>
+      <h3>No results yet</h3>
+      <p>Upload resumes and enter job criteria to begin screening.</p>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const mfi=document.getElementById("mfi"),mdzI=document.getElementById("mdzI"),mdzS=document.getElementById("mdzS"),mdz=document.getElementById("mdz");
+mfi.addEventListener("change",function(){if(this.files.length){document.getElementById("mfCount").textContent=this.files.length+" file(s) selected";mdzS.classList.remove("hidden");mdzI.style.display="none";}});
+function clearFiles(e){e.stopPropagation();mfi.value="";mdzS.classList.add("hidden");mdzI.style.display="";}
+mdz.addEventListener("dragover",e=>{e.preventDefault();mdz.classList.add("dz-over");});
+mdz.addEventListener("dragleave",()=>mdz.classList.remove("dz-over"));
+mdz.addEventListener("drop",e=>{e.preventDefault();mdz.classList.remove("dz-over");const dt=new DataTransfer();Array.from(e.dataTransfer.files).forEach(f=>dt.items.add(f));mfi.files=dt.files;document.getElementById("mfCount").textContent=mfi.files.length+" file(s) selected";mdzS.classList.remove("hidden");mdzI.style.display="none";});
+document.getElementById("recForm").addEventListener("submit",function(){const b=document.getElementById("recBtn");document.getElementById("recTxt").textContent="Screening…";b.disabled=true;});
+function filterCands(type,btn){
+  document.querySelectorAll(".rec-tab").forEach(t=>t.classList.remove("active"));
+  btn.classList.add("active");
+  document.querySelectorAll(".cand-card").forEach(c=>{
+    if(type==="all") c.style.display="";
+    else if(type==="short") c.style.display=c.dataset.ok==="yes"?"":"none";
+    else c.style.display=c.dataset.ok==="no"?"":"none";
+  });
+}
+</script>
+{% endblock %}

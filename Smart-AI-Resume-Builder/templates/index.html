@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}ResumeLens AI — AI-Powered Resume Intelligence{% endblock %}
+
+{% block public_content %}
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-noise"></div>
+  <div class="hero-text">
+    <a href="{{ url_for('signup') }}" class="badge-pill">
+      <span class="pulse-dot"></span> AI-Powered · Free to Start
+    </a>
+    <h1>Your Resume,<br><span class="grad">Decoded by AI.</span></h1>
+    <p>ATS scoring, skill gap detection, and recruiter-grade candidate screening — built for job seekers <em>and</em> hiring teams.</p>
+    <div class="hero-actions">
+      <a href="{{ url_for('signup') }}" class="glow-btn">
+        <i class="fas fa-rocket"></i> <span>Start for Free</span>
+      </a>
+      <a href="#features" class="ghost-btn">
+        <i class="fas fa-play-circle"></i> See How It Works
+      </a>
+    </div>
+    <p class="hero-note"><i class="fas fa-shield-alt"></i> No credit card · Files deleted after analysis</p>
+  </div>
+  <div class="hero-visual">
+    <div class="score-preview">
+      <div class="sp-header">
+        <span class="sp-dot sp-green"></span>
+        <span class="sp-dot sp-yellow"></span>
+        <span class="sp-dot sp-red"></span>
+        <span class="sp-title">ATS Score · jane_doe_resume.pdf</span>
+      </div>
+      <div class="sp-body">
+        <div class="sp-ring-wrap">
+          <svg class="sp-ring" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="42" class="sp-ring-bg"/>
+            <circle cx="50" cy="50" r="42" class="sp-ring-fill"
+              style="stroke-dasharray:188 264;stroke-dashoffset:-38"/>
+          </svg>
+          <span class="sp-score">82</span>
+        </div>
+        <div class="sp-bars">
+          <div class="sp-bar-row"><span>Skills</span><div class="sp-track"><div class="sp-fill" style="width:90%;background:var(--success)"></div></div><span>90%</span></div>
+          <div class="sp-bar-row"><span>Format</span><div class="sp-track"><div class="sp-fill" style="width:75%;background:var(--warning)"></div></div><span>75%</span></div>
+          <div class="sp-bar-row"><span>Keywords</span><div class="sp-track"><div class="sp-fill" style="width:82%;background:var(--info)"></div></div><span>82%</span></div>
+          <div class="sp-bar-row"><span>Contact</span><div class="sp-track"><div class="sp-fill" style="width:60%;background:var(--danger)"></div></div><span>60%</span></div>
+        </div>
+      </div>
+      <div class="sp-tags">
+        <span class="tag tag-success">Python</span>
+        <span class="tag tag-success">React</span>
+        <span class="tag tag-success">SQL</span>
+        <span class="tag tag-danger">Docker</span>
+        <span class="tag tag-danger">AWS</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FEATURES ── -->
+<section class="features-section" id="features">
+  <div class="section-label">What you get</div>
+  <h2 class="section-title">Everything you need<br>to get hired faster</h2>
+  <div class="features-grid">
+    <div class="feat-block">
+      <div class="feat-icon-wrap accent-purple"><i class="fas fa-robot"></i></div>
+      <h3>ATS Scoring</h3>
+      <p>ML-powered compatibility score against industry job descriptions. Know exactly where you stand before applying.</p>
+    </div>
+    <div class="feat-block">
+      <div class="feat-icon-wrap accent-cyan"><i class="fas fa-crosshairs"></i></div>
+      <h3>Skill Gap Analysis</h3>
+      <p>Pinpoint missing keywords and skills for your target role. Get a prioritized list of what to learn next.</p>
+    </div>
+    <div class="feat-block">
+      <div class="feat-icon-wrap accent-green"><i class="fas fa-comments"></i></div>
+      <h3>Improvement Tips</h3>
+      <p>AI suggests targeted improvements to your resume sections — contact, summary, skills, and experience.</p>
+    </div>
+    <div class="feat-block">
+      <div class="feat-icon-wrap accent-orange"><i class="fas fa-users"></i></div>
+      <h3>Recruiter Screening</h3>
+      <p>Upload 50+ resumes, set criteria, and get an AI-ranked shortlist in seconds. Built for hiring teams.</p>
+    </div>
+    <div class="feat-block">
+      <div class="feat-icon-wrap accent-pink"><i class="fas fa-download"></i></div>
+      <h3>Export Results</h3>
+      <p>Recruiters can export shortlisted candidates to CSV for further review or sharing with your team.</p>
+    </div>
+    <div class="feat-block">
+      <div class="feat-icon-wrap accent-blue"><i class="fas fa-shield-alt"></i></div>
+      <h3>Privacy First</h3>
+      <p>Your files are analyzed in memory and deleted immediately. We never store or share your documents.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── DUAL CTA ── -->
+<section class="dual-cta">
+  <div class="cta-card cta-user">
+    <i class="fas fa-user-astronaut"></i>
+    <h3>For Job Seekers</h3>
+    <p>Upload your resume and get an instant ATS score, skill gap report, and personalized improvement tips.</p>
+    <a href="{{ url_for('signup') }}?role=user" class="glow-btn">Get My ATS Score <i class="fas fa-arrow-right"></i></a>
+  </div>
+  <div class="cta-card cta-recruiter">
+    <i class="fas fa-building"></i>
+    <h3>For Recruiters</h3>
+    <p>Screen and rank multiple candidates at once using AI-powered criteria matching and shortlisting.</p>
+    <a href="{{ url_for('signup') }}?role=recruiter" class="outline-btn">Open Recruiter Portal <i class="fas fa-arrow-right"></i></a>
+  </div>
+</section>
+
+{% endblock %}

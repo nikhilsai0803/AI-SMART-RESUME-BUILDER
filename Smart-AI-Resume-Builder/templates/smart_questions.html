@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Smart Interview Questions – ResumeLens AI{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-inner">
+    <h1 class="page-title"><i class="fas fa-comments-question"></i> Smart Interview Questions</h1>
+    <p class="page-subtitle">Role-specific, experience-level-aware questions with expert prep tips</p>
+  </div>
+</div>
+
+<div class="content-wrap">
+
+  <div class="v2-config-panel">
+    <form method="POST" class="v2-inline-form">
+      <div class="v2-form-group">
+        <label class="v2-label">Category</label>
+        <select name="category" id="catSel" class="v2-select" onchange="loadRoles(this.value,'roleSel')">
+          <option value="None">— Any —</option>
+          {% for cat in categories %}<option value="{{ cat }}" {% if result and result.job_role in cat %}selected{% endif %}>{{ cat }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="v2-form-group">
+        <label class="v2-label">Role</label>
+        <select name="role" id="roleSel" class="v2-select">
+          <option value="None">— Any —</option>
+        </select>
+      </div>
+      <div class="v2-form-group">
+        <label class="v2-label">Experience Level</label>
+        <select name="level" class="v2-select">
+          <option value="junior">Junior (0–2 yrs)</option>
+          <option value="mid" selected>Mid (2–5 yrs)</option>
+          <option value="senior">Senior (5+ yrs)</option>
+        </select>
+      </div>
+      <div class="v2-form-group v2-form-narrow">
+        <label class="v2-label"># Questions</label>
+        <input type="number" name="num_questions" value="15" min="5" max="30" class="v2-select">
+      </div>
+      <button type="submit" class="v2-btn-primary v2-btn-icon"><i class="fas fa-wand-magic-sparkles"></i> Generate</button>
+    </form>
+  </div>
+
+  {% if result %}
+
+  <div class="v2-summary-bar">
+    <span><i class="fas fa-list-ol" style="color:var(--accent)"></i> <strong>{{ result.total_questions }}</strong> questions</span>
+    <span class="v2-divider"></span>
+    <span>{{ result.job_role }}</span>
+    <span class="v2-divider"></span>
+    <span class="v2-chip v2-chip-purple">{{ result.experience_level|capitalize }}</span>
+  </div>
+
+  <div class="v2-card v2-tips-card">
+    <div class="v2-card-hdr v2-hdr-yellow"><i class="fas fa-lightbulb"></i> Preparation Tips</div>
+    <div class="v2-tips-grid">
+      {% for tip in result.prep_tips %}
+      <div class="v2-tip-item"><i class="fas fa-circle-dot" style="color:var(--accent)"></i> {{ tip }}</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% set category_icons = {
+    'behavioral':    ('fas fa-person-chalkboard', 'Behavioural Questions', 'Use the STAR method for every answer'),
+    'role_specific': ('fas fa-code', 'Role-Specific Technical', 'Explain with real project examples'),
+    'technical':     ('fas fa-microchip', 'Core Technical Concepts', 'Be ready to whiteboard or code live'),
+    'system_design': ('fas fa-diagram-project', 'System Design', 'Think aloud and discuss trade-offs'),
+    'culture_fit':   ('fas fa-handshake', 'Culture & Process Fit', 'Be authentic — show self-awareness'),
+    'ai_generated':  ('fas fa-robot', 'AI-Generated Questions', 'Powered by Hugging Face'),
+  } %}
+
+  {% for cat, questions in result.questions.items() %}
+  {% if questions %}
+  {% set icon, label, hint = category_icons.get(cat, ('fas fa-circle', cat|capitalize, '')) %}
+  <div class="v2-card v2-q-block">
+    <div class="v2-q-hdr">
+      <div class="v2-q-hdr-left"><i class="{{ icon }}"></i> {{ label }}</div>
+      <span class="v2-q-count">{{ questions|length }}</span>
+    </div>
+    {% if hint %}<div class="v2-q-hint"><i class="fas fa-info-circle"></i> {{ hint }}</div>{% endif %}
+    <div class="v2-q-list">
+      {% for item in questions %}
+      <div class="v2-q-item" onclick="toggleTip(this)">
+        <div class="v2-q-num">Q{{ loop.index }}</div>
+        <div class="v2-q-body">
+          <p class="v2-q-text">{{ item.q }}</p>
+          {% if item.tip %}
+          <div class="v2-q-tip hidden"><i class="fas fa-star" style="color:var(--warning)"></i> <strong>Tip:</strong> {{ item.tip }}</div>
+          {% endif %}
+        </div>
+        {% if item.tip %}<i class="fas fa-chevron-down v2-q-arrow"></i>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+  {% endfor %}
+
+  <div class="v2-action-bar">
+    <button onclick="window.print()" class="v2-btn-outline"><i class="fas fa-print"></i> Print</button>
+    <a href="{{ url_for('smart_questions') }}" class="v2-btn-outline"><i class="fas fa-redo"></i> New Set</a>
+  </div>
+
+  {% else %}
+  <div class="v2-empty-state">
+    <div class="v2-empty-icon"><i class="fas fa-comments-question"></i></div>
+    <p>Select a role above and click <strong>Generate</strong> to get your personalised question set.</p>
+  </div>
+  {% endif %}
+
+  {% if error %}<div class="v2-alert v2-alert-danger"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>{% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function loadRoles(cat, targetId) {
+  fetch(`/get_roles?category=${encodeURIComponent(cat)}`)
+    .then(r => r.json()).then(roles => {
+      const sel = document.getElementById(targetId);
+      sel.innerHTML = '<option value="None">— Any —</option>';
+      roles.forEach(r => sel.innerHTML += `<option value="${r}">${r}</option>`);
+    });
+}
+function toggleTip(el) {
+  const tip = el.querySelector('.v2-q-tip');
+  const arrow = el.querySelector('.v2-q-arrow');
+  if (tip) {
+    tip.classList.toggle('hidden');
+    arrow?.classList.toggle('fa-chevron-down');
+    arrow?.classList.toggle('fa-chevron-up');
+  }
+}
+</script>
+{% endblock %}

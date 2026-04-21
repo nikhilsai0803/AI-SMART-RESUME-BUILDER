@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}AI Interview Questions — ResumeLens AI{% endblock %}
+{% block content %}
+
+<div class="dash-header">
+  <div>
+    <h1><span class="grad">AI Interview Questions</span></h1>
+    <p class="dim">Generate personalized interview questions based on your target skills.</p>
+  </div>
+</div>
+
+<div class="analyzer-layout">
+
+  <!-- ── Input Panel ─────────────────────────────────────────────── -->
+  <div class="glass-card">
+    <h3 class="card-title"><i class="fas fa-robot"></i> Generate Questions</h3>
+
+    <form method="POST" action="{{ url_for('ai_questions') }}" id="aqForm">
+
+      <div class="fg" style="margin-bottom:1.25rem">
+        <label>Your Prompt</label>
+        <textarea name="prompt" class="finput ftextarea" rows="4" id="promptBox"
+          placeholder="E.g.: Give me 10 questions on Python and Java"
+          required>{{ prompt }}</textarea>
+        <p class="input-hint" style="margin-top:.5rem">
+          <i class="fas fa-info-circle"></i>
+          Mention a number and skills — e.g., <em>"Give me 15 questions on React and Node.js"</em>
+        </p>
+      </div>
+
+      <!-- Quick-fill chips -->
+      <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.25rem">
+        {% for chip in ['Python','Java','React','SQL','Machine Learning','Data Science','AWS','Django'] %}
+        <button type="button" class="skill-chip" onclick="appendSkill('{{ chip }}')">{{ chip }}</button>
+        {% endfor %}
+      </div>
+
+      <button class="glow-btn w100" type="submit" id="genBtn">
+        <i class="fas fa-magic"></i>
+        <span id="genTxt">Generate Questions</span>
+      </button>
+    </form>
+
+    {% if error %}
+    <div class="flash flash-error" style="margin-top:1rem">
+      <i class="fas fa-exclamation-circle"></i> <span>{{ error }}</span>
+    </div>
+    {% endif %}
+    {% if warning %}
+    <div class="flash flash-warning" style="margin-top:1rem">
+      <i class="fas fa-triangle-exclamation"></i> <span>{{ warning }}</span>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ── Tips Panel ──────────────────────────────────────────────── -->
+  <div class="side-col">
+    <div class="glass-card tips-card">
+      <h4><i class="fas fa-lightbulb text-warning"></i> How to Use</h4>
+      <ul class="tips-list">
+        <li><i class="fas fa-check"></i> Specify a number: <em>"Give me 10 questions…"</em></li>
+        <li><i class="fas fa-check"></i> Mention skills after <strong>"on"</strong>: <em>"…on Python and Java"</em></li>
+        <li><i class="fas fa-check"></i> Multiple skills: <em>"…on React, Node.js and MongoDB"</em></li>
+        <li><i class="fas fa-check"></i> Max 50 questions per request</li>
+        <li><i class="fas fa-check"></i> Use the chips below to quickly add skills</li>
+      </ul>
+    </div>
+    <div class="glass-card">
+      <h4><i class="fas fa-star text-warning"></i> Example Prompts</h4>
+      <div style="display:flex;flex-direction:column;gap:.5rem">
+        {% for ex in [
+          'Give me 10 questions on Python and Machine Learning',
+          'Give me 20 questions on React and Node.js',
+          'Give me 15 questions on Java and Spring Boot',
+          'Give me 25 questions on SQL and MongoDB',
+        ] %}
+        <button type="button" class="demo-btn" style="text-align:left"
+          onclick="document.getElementById('promptBox').value='{{ ex }}'">
+          <i class="fas fa-magic"></i> {{ ex }}
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Results ────────────────────────────────────────────────────── -->
+{% if questions %}
+<div class="glass-card" style="margin-top:1.5rem">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem">
+    <h3 class="card-title" style="margin:0">
+      <i class="fas fa-list-ol"></i>
+      {{ questions|length }} Questions on <span class="grad">{{ skills_str }}</span>
+    </h3>
+    {% if encouraging %}
+    <span class="tag tag-success" style="font-size:.85rem"><i class="fas fa-star"></i> {{ encouraging }}</span>
+    {% endif %}
+    <button class="outline-btn" onclick="copyAll()">
+      <i class="fas fa-copy"></i> Copy All
+    </button>
+  </div>
+
+  <div class="questions-list" id="questionsList">
+    {% for q in questions %}
+    <div class="question-item">
+      <span class="q-num">{{ loop.index }}</span>
+      <p class="q-text">{{ q }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function appendSkill(skill) {
+  const box = document.getElementById('promptBox');
+  const val = box.value.trim();
+  if (!val) {
+    box.value = `Give me 10 questions on ${skill}`;
+  } else if (val.toLowerCase().includes(' on ')) {
+    box.value = val + ` and ${skill}`;
+  } else {
+    box.value = val + ` and ${skill}`;
+  }
+}
+
+document.getElementById('aqForm').addEventListener('submit', function() {
+  const btn = document.getElementById('genBtn');
+  document.getElementById('genTxt').textContent = 'Generating…';
+  btn.disabled = true;
+});
+
+function copyAll() {
+  const items = document.querySelectorAll('.q-text');
+  const text  = Array.from(items).map((el, i) => `${i+1}. ${el.textContent}`).join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.currentTarget;
+    btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+    setTimeout(() => btn.innerHTML = '<i class="fas fa-copy"></i> Copy All', 2000);
+  });
+}
+</script>
+
+<style>
+.skill-chip {
+  padding:.35rem .9rem;border-radius:2rem;
+  border:1px solid var(--accent);color:var(--accent);
+  background:rgba(99,102,241,.08);font-size:.82rem;cursor:pointer;transition:.2s
+}
+.skill-chip:hover { background:var(--accent);color:#fff }
+
+.questions-list { display:flex;flex-direction:column;gap:.6rem }
+.question-item {
+  display:flex;align-items:flex-start;gap:.875rem;
+  padding:.75rem 1rem;border-radius:10px;
+  background:rgba(255,255,255,.03);border:1px solid var(--border);
+  transition:.2s
+}
+.question-item:hover { background:rgba(255,255,255,.06) }
+.q-num {
+  min-width:28px;height:28px;border-radius:50%;
+  background:var(--accent);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.78rem;font-weight:700;flex-shrink:0
+}
+.q-text { margin:0;font-size:.92rem;line-height:1.5 }
+</style>
+{% endblock %}

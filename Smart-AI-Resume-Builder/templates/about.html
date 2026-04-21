@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}About — ResumeLens AI{% endblock %}
+
+{% block public_content %}
+<div class="about-wrap">
+
+  <!-- Hero -->
+  <div class="about-hero">
+    <div class="hero-glow"></div>
+    <h1>About <span class="grad">ResumeLens AI</span></h1>
+    <p>A powerful AI-driven platform for optimizing your resume and accelerating your career.</p>
+  </div>
+
+  <!-- Vision -->
+  <section class="glass-card about-vision">
+    <i class="fas fa-lightbulb vision-icon"></i>
+    <h2>Our Vision</h2>
+    <p class="vision-text">
+      "ResumeLens AI represents the vision of democratizing career advancement through technology.
+      By combining cutting-edge AI with intuitive design, this platform empowers job seekers at
+      every career stage to showcase their true potential and stand out in today's competitive job market."
+    </p>
+  </section>
+
+  <!-- Features grid -->
+  <section class="features-section" style="margin-top:3rem">
+    <div class="section-label">What we offer</div>
+    <h2 class="section-title">Built for every stage<br>of your career journey</h2>
+    <div class="features-grid">
+      <div class="feat-block">
+        <div class="feat-icon-wrap accent-purple"><i class="fas fa-robot"></i></div>
+        <h3>AI-Powered Analysis</h3>
+        <p>Advanced algorithms provide detailed insights and suggestions to optimize your resume for maximum ATS impact.</p>
+      </div>
+      <div class="feat-block">
+        <div class="feat-icon-wrap accent-cyan"><i class="fas fa-file-alt"></i></div>
+        <h3>Resume Builder</h3>
+        <p>Build a polished, professional resume from scratch using our structured multi-section builder and download it as DOCX.</p>
+      </div>
+      <div class="feat-block">
+        <div class="feat-icon-wrap accent-green"><i class="fas fa-question-circle"></i></div>
+        <h3>AI Interview Prep</h3>
+        <p>Generate skill-targeted interview questions instantly using our AI question engine to ace any interview.</p>
+      </div>
+      <div class="feat-block">
+        <div class="feat-icon-wrap accent-orange"><i class="fas fa-search"></i></div>
+        <h3>Job Search</h3>
+        <p>Browse live job listings tailored to your skills and location, powered by the Adzuna jobs API.</p>
+      </div>
+      <div class="feat-block">
+        <div class="feat-icon-wrap accent-pink"><i class="fas fa-users"></i></div>
+        <h3>Recruiter Portal</h3>
+        <p>Upload 50+ resumes, set criteria, and get an AI-ranked shortlist in seconds — built for hiring teams.</p>
+      </div>
+      <div class="feat-block">
+        <div class="feat-icon-wrap accent-blue"><i class="fas fa-chart-line"></i></div>
+        <h3>Data-Driven Insights</h3>
+        <p>Make informed decisions with analytics-based recommendations and detailed section-level score breakdowns.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Privacy section -->
+  <section class="glass-card about-privacy">
+    <div class="about-privacy-inner">
+      <div class="privacy-icon accent-green"><i class="fas fa-shield-alt"></i></div>
+      <div>
+        <h3>Privacy First, Always</h3>
+        <p>Your data security is our top priority. Resumes uploaded for analysis are processed in memory and permanently deleted immediately after — we never store or share your documents.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <div class="dual-cta" style="margin-top:3rem">
+    <div class="cta-card cta-user">
+      <i class="fas fa-user-astronaut"></i>
+      <h3>Get Started Free</h3>
+      <p>Create an account and start optimizing your resume in minutes.</p>
+      <a href="{{ url_for('signup') }}" class="glow-btn">Create Account <i class="fas fa-arrow-right"></i></a>
+    </div>
+    <div class="cta-card cta-recruiter">
+      <i class="fas fa-building"></i>
+      <h3>Recruiter Portal</h3>
+      <p>Screen and rank candidates at scale using AI-powered criteria matching.</p>
+      <a href="{{ url_for('signup') }}?role=recruiter" class="outline-btn">Open Portal <i class="fas fa-arrow-right"></i></a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- about is also reachable when logged in via sidebar -->
+<div class="about-wrap">
+  <div class="about-hero" style="padding:2rem 0 1.5rem">
+    <h1>About <span class="grad">ResumeLens AI</span></h1>
+    <p class="dim">The platform behind your career growth.</p>
+  </div>
+  <section class="glass-card about-vision">
+    <i class="fas fa-lightbulb vision-icon"></i>
+    <h2>Our Vision</h2>
+    <p class="vision-text">
+      "ResumeLens AI represents the vision of democratizing career advancement through technology.
+      By combining cutting-edge AI with intuitive design, this platform empowers job seekers at
+      every career stage to showcase their true potential and stand out in today's competitive job market."
+    </p>
+  </section>
+  <section class="features-section" style="margin-top:2rem">
+    <div class="features-grid">
+      {% for icon,title,desc in [
+        ('fas fa-robot','AI-Powered Analysis','Advanced algorithms provide detailed insights to optimize your resume for maximum ATS impact.'),
+        ('fas fa-file-alt','Resume Builder','Build a polished resume from scratch and download it as a professional DOCX file.'),
+        ('fas fa-question-circle','AI Interview Prep','Generate skill-targeted interview questions instantly to ace any interview.'),
+        ('fas fa-search','Job Search','Browse live job listings tailored to your skills and location.'),
+        ('fas fa-users','Recruiter Portal','Screen 50+ resumes and get an AI-ranked shortlist in seconds.'),
+        ('fas fa-shield-alt','Privacy First','Files analyzed in memory and deleted immediately after. We never store your documents.'),
+      ] %}
+      <div class="feat-block">
+        <div class="feat-icon-wrap accent-purple"><i class="{{ icon }}"></i></div>
+        <h3>{{ title }}</h3>
+        <p>{{ desc }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+<style>
+.about-wrap { max-width:1100px;margin:0 auto;padding:2rem 1.5rem }
+.about-hero { text-align:center;padding:3rem 1rem 2rem;position:relative }
+.about-hero h1 { font-size:2.5rem }
+.about-vision {
+  text-align:center;max-width:720px;margin:0 auto;padding:2.5rem!important
+}
+.vision-icon { font-size:2.5rem;color:var(--accent);margin-bottom:1rem }
+.vision-text { color:var(--text-muted);font-style:italic;line-height:1.8;font-size:1.05rem }
+.about-privacy { margin-top:2rem }
+.about-privacy-inner { display:flex;align-items:flex-start;gap:1.5rem }
+.privacy-icon { font-size:2rem;color:var(--success);flex-shrink:0 }
+</style>

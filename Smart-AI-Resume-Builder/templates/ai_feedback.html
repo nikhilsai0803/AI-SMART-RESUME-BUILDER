@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block title %}AI Smart Feedback – ResumeLens AI{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-inner">
+    <h1 class="page-title"><i class="fas fa-brain"></i> AI Smart Feedback</h1>
+    <p class="page-subtitle">Deep analysis of your resume with actionable, prioritised improvements</p>
+  </div>
+</div>
+
+<div class="content-wrap">
+
+  {% if not result %}
+  <div class="v2-upload-card">
+    <div class="v2-upload-glow"></div>
+    <form method="POST" enctype="multipart/form-data">
+      <div class="v2-dropzone" id="uploadZone" onclick="document.getElementById('resumeFile').click()">
+        <input type="file" name="resume" id="resumeFile" accept=".pdf,.docx" hidden onchange="handleFile(this)">
+        <div class="v2-drop-icon"><i class="fas fa-file-arrow-up"></i></div>
+        <div class="v2-drop-title" id="uploadText">Drop your resume here</div>
+        <div class="v2-drop-sub">PDF or DOCX &nbsp;·&nbsp; Max 10 MB &nbsp;·&nbsp; Click to browse</div>
+        <div class="v2-file-badge hidden" id="fileBadge"><i class="fas fa-file-check"></i> <span id="fileName"></span></div>
+      </div>
+      <div class="v2-form-row">
+        <div class="v2-form-group">
+          <label class="v2-label">Category <span style="color:var(--text3);font-size:.8rem">(optional)</span></label>
+          <select name="category" id="catSel" class="v2-select" onchange="loadRoles(this.value,'roleSel')">
+            <option value="None">— Select category —</option>
+            {% for cat in categories %}<option value="{{ cat }}">{{ cat }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="v2-form-group">
+          <label class="v2-label">Target Role <span style="color:var(--text3);font-size:.8rem">(optional)</span></label>
+          <select name="role" id="roleSel" class="v2-select">
+            <option value="None">— Select role —</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit" class="v2-submit-btn">
+        <i class="fas fa-sparkles"></i> Analyse with AI
+      </button>
+    </form>
+  </div>
+
+  {% else %}
+
+  <!-- Grade + AI Summary row -->
+  <div class="v2-grade-row">
+    <div class="v2-grade-card v2-grade-{{ result.overall_grade|replace('+','plus') }}">
+      <div class="v2-grade-ring">{{ result.overall_grade }}</div>
+      <div class="v2-grade-label">Resume Grade</div>
+      <div class="v2-grade-score">Impact Score <strong>{{ result.impact_score }}/100</strong></div>
+    </div>
+
+    {% if result.ai_summary %}
+    <div class="v2-card v2-ai-summary-card">
+      <div class="v2-card-hdr v2-hdr-purple">
+        <i class="fas fa-robot"></i> AI Executive Summary
+        <span class="v2-hf-badge">Hugging Face</span>
+      </div>
+      <div class="v2-ai-summary-body">{{ result.ai_summary }}</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="v2-grid">
+
+    <!-- Section Scores -->
+    <div class="v2-card">
+      <div class="v2-card-hdr"><i class="fas fa-chart-bar"></i> Section Scores</div>
+      <div style="padding:1rem 1.25rem">
+        {% for section, data in result.section_feedback.items() %}
+        <div class="v2-bar-row">
+          <span class="v2-bar-label">{{ section|capitalize }}</span>
+          <div class="v2-bar-track">
+            <div class="v2-bar-fill v2-bar-{{ data.score|score_color }}" style="width:{{ data.score }}%"></div>
+          </div>
+          <span class="v2-bar-val">{{ data.score }}%</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Strengths -->
+    {% if result.strengths %}
+    <div class="v2-card">
+      <div class="v2-card-hdr v2-hdr-green"><i class="fas fa-trophy"></i> Strengths</div>
+      <ul class="v2-tip-list">
+        {% for s in result.strengths %}<li><i class="fas fa-check-circle" style="color:var(--success)"></i> {{ s }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <!-- Critical Issues -->
+    {% if result.critical_issues %}
+    <div class="v2-card">
+      <div class="v2-card-hdr v2-hdr-red"><i class="fas fa-exclamation-triangle"></i> Critical Issues</div>
+      <ul class="v2-tip-list">
+        {% for i in result.critical_issues %}<li><i class="fas fa-times-circle" style="color:var(--danger)"></i> {{ i }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <!-- Top Improvements -->
+    <div class="v2-card v2-span-full">
+      <div class="v2-card-hdr"><i class="fas fa-arrow-trend-up"></i> Top Improvements (Prioritised)</div>
+      <div class="v2-imp-list">
+        {% for imp in result.improvements %}
+        {% set pri = 'high' if imp.priority > 60 else ('medium' if imp.priority > 30 else 'low') %}
+        <div class="v2-imp-item v2-imp-{{ pri }}">
+          <div class="v2-imp-badge">{{ imp.section|capitalize }}</div>
+          <p class="v2-imp-tip">{{ imp.tip }}</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Writing Quality -->
+    <div class="v2-card">
+      <div class="v2-card-hdr"><i class="fas fa-pen-nib"></i> Writing Quality</div>
+      <div class="v2-wq-list">
+        <div class="v2-wq-row"><span>Word Count</span><strong>{{ result.writing_quality.word_count }}</strong></div>
+        <div class="v2-wq-row">
+          <span>First-person pronouns</span>
+          <strong style="color:{{ 'var(--danger)' if result.writing_quality.has_pronouns else 'var(--success)' }}">
+            {{ 'Found – remove them' if result.writing_quality.has_pronouns else 'None – great!' }}
+          </strong>
+        </div>
+        {% if result.writing_quality.cliches_found %}
+        <div class="v2-wq-row">
+          <span>Buzzword overuse</span>
+          <strong style="color:var(--warning)">{{ result.writing_quality.cliches_found|join(', ') }}</strong>
+        </div>
+        {% endif %}
+        {% for tip in result.writing_quality.tips %}
+        <div class="v2-wq-tip"><i class="fas fa-lightbulb" style="color:var(--warning)"></i> {{ tip }}</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- ATS Tips -->
+    <div class="v2-card">
+      <div class="v2-card-hdr v2-hdr-blue"><i class="fas fa-robot"></i> ATS Compatibility Tips</div>
+      <ul class="v2-tip-list">
+        {% for tip in result.ats_tips %}<li><i class="fas fa-circle-dot" style="color:var(--accent)"></i> {{ tip }}</li>{% endfor %}
+      </ul>
+    </div>
+
+  </div>
+
+  <div class="v2-action-bar">
+    <a href="{{ url_for('ai_feedback') }}" class="v2-btn-outline"><i class="fas fa-redo"></i> Analyse Another</a>
+    <a href="{{ url_for('rewrite') }}" class="v2-btn-primary"><i class="fas fa-pencil"></i> Get Rewrite Suggestions</a>
+  </div>
+
+  {% endif %}
+
+  {% if error %}<div class="v2-alert v2-alert-danger"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>{% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function handleFile(input) {
+  const name = input.files[0]?.name || '';
+  document.getElementById('uploadText').textContent = name ? 'File ready to upload' : 'Drop your resume here';
+  const badge = document.getElementById('fileBadge');
+  document.getElementById('fileName').textContent = name;
+  badge.classList.toggle('hidden', !name);
+}
+function loadRoles(cat, targetId) {
+  fetch(`/get_roles?category=${encodeURIComponent(cat)}`)
+    .then(r => r.json()).then(roles => {
+      const sel = document.getElementById(targetId);
+      sel.innerHTML = '<option value="None">— Select role —</option>';
+      roles.forEach(r => sel.innerHTML += `<option value="${r}">${r}</option>`);
+    });
+}
+const zone = document.getElementById('uploadZone');
+if (zone) {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('v2-drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('v2-drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('v2-drag-over');
+    const fi = document.getElementById('resumeFile');
+    fi.files = e.dataTransfer.files; handleFile(fi);
+  });
+}
+</script>
+{% endblock %}

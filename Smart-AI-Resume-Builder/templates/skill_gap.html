@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Skill Gap Analysis – ResumeLens AI{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-inner">
+    <h1 class="page-title"><i class="fas fa-chart-network"></i> Skill Gap Analyzer</h1>
+    <p class="page-subtitle">Discover what skills you need and get a personalised learning roadmap</p>
+  </div>
+</div>
+
+<div class="content-wrap">
+
+  {% if not result %}
+  <div class="v2-upload-card">
+    <div class="v2-upload-glow"></div>
+    <form method="POST" enctype="multipart/form-data">
+      <div class="v2-dropzone" id="uploadZone" onclick="document.getElementById('resumeFile').click()">
+        <input type="file" name="resume" id="resumeFile" accept=".pdf,.docx" hidden onchange="handleFile(this)">
+        <div class="v2-drop-icon"><i class="fas fa-cloud-arrow-up"></i></div>
+        <div class="v2-drop-title" id="uploadText">Drop your resume here</div>
+        <div class="v2-drop-sub">PDF or DOCX &nbsp;·&nbsp; Max 10 MB &nbsp;·&nbsp; Click to browse</div>
+        <div class="v2-file-badge hidden" id="fileBadge"><i class="fas fa-file-check"></i> <span id="fileName"></span></div>
+      </div>
+      <div class="v2-form-row">
+        <div class="v2-form-group">
+          <label class="v2-label">Category <span class="v2-req">*</span></label>
+          <select name="category" id="catSel" class="v2-select" onchange="loadRoles(this.value,'roleSel')" required>
+            <option value="None">— Select category —</option>
+            {% for cat in categories %}<option value="{{ cat }}">{{ cat }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="v2-form-group">
+          <label class="v2-label">Target Role <span class="v2-req">*</span></label>
+          <select name="role" id="roleSel" class="v2-select" required>
+            <option value="None">— Select role —</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit" class="v2-submit-btn">
+        <i class="fas fa-magnifying-glass-chart"></i> Analyse Skill Gaps
+      </button>
+    </form>
+  </div>
+
+  {% else %}
+
+  <div class="v2-hero-bar">
+    <div class="v2-donut-wrap">
+      <svg viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="10"/>
+        <circle cx="50" cy="50" r="38" fill="none"
+          stroke="{{ '#22c55e' if result.match_percentage >= 70 else ('#f59e0b' if result.match_percentage >= 40 else '#ef4444') }}"
+          stroke-width="10"
+          stroke-dasharray="{{ result.match_percentage * 2.388 }} 238.76"
+          stroke-dashoffset="59.69"
+          stroke-linecap="round"/>
+        <text x="50" y="45" text-anchor="middle" font-size="20" font-weight="800" fill="#f1f2f6">{{ result.match_percentage }}%</text>
+        <text x="50" y="58" text-anchor="middle" font-size="7.5" fill="#a0a8b8">Match</text>
+      </svg>
+    </div>
+    <div class="v2-hero-info">
+      <div class="v2-hero-title">{{ result.job_role }}</div>
+      <div class="v2-hero-sub">{{ result.target_level }} &nbsp;·&nbsp; Est. {{ result.experience_years_est }}+ yrs experience</div>
+      <div class="v2-chip-row">
+        <span class="v2-chip v2-chip-green"><i class="fas fa-circle-check"></i> {{ result.matching_skills|length }} matched</span>
+        <span class="v2-chip v2-chip-red"><i class="fas fa-circle-xmark"></i> {{ result.gap_skills|length }} missing</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="v2-grid">
+    <div class="v2-card">
+      <div class="v2-card-hdr v2-hdr-green"><i class="fas fa-circle-check"></i> Skills You Have</div>
+      <div class="v2-tag-cloud">
+        {% for s in result.matching_skills %}<span class="v2-tag v2-tag-green">{{ s }}</span>{% endfor %}
+        {% if not result.matching_skills %}<p class="v2-empty-note">No matches detected — add more skills to your resume.</p>{% endif %}
+      </div>
+    </div>
+
+    <div class="v2-card">
+      <div class="v2-card-hdr v2-hdr-red"><i class="fas fa-circle-xmark"></i> Skills to Acquire</div>
+      <div class="v2-tag-cloud">
+        {% for s in result.gap_skills %}<span class="v2-tag v2-tag-red">{{ s }}</span>{% endfor %}
+        {% if not result.gap_skills %}<p class="v2-empty-note" style="color:var(--success)">✓ You have all required skills!</p>{% endif %}
+      </div>
+    </div>
+
+    {% if result.transferable_skills %}
+    <div class="v2-card v2-span-full">
+      <div class="v2-card-hdr v2-hdr-blue"><i class="fas fa-arrows-turn-to-dots"></i> Transferable Skills</div>
+      <div class="v2-transfer-list">
+        {% for t in result.transferable_skills %}
+        <div class="v2-transfer-row">
+          <span class="v2-tag v2-tag-green">{{ t.have }}</span>
+          <i class="fas fa-arrow-right" style="color:var(--text3);font-size:.75rem"></i>
+          <span class="v2-tag v2-tag-red">{{ t.needed }}</span>
+          <span class="v2-transfer-reason">{{ t.reason }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="v2-card v2-span-full">
+      <div class="v2-card-hdr"><i class="fas fa-map-location-dot"></i> Personalised Learning Roadmap</div>
+      <div class="v2-roadmap">
+        {% for phase in result.learning_roadmap %}
+        {% if phase.skills %}
+        <div class="v2-phase">
+          <div class="v2-phase-label"><span class="v2-phase-dot"></span>{{ phase.phase }}</div>
+          <div class="v2-phase-skills">
+            {% for item in phase.skills %}
+            <div class="v2-skill-card">
+              <div class="v2-sc-top">
+                <span class="v2-tag v2-tag-red">{{ item.skill }}</span>
+                <span class="v2-sc-cat">{{ item.category }}</span>
+              </div>
+              <div class="v2-sc-time"><i class="fas fa-clock"></i> {{ item.time_to_learn }}</div>
+              <a href="{{ item.resource.url }}" target="_blank" class="v2-sc-link">
+                <i class="fas fa-arrow-up-right-from-square"></i> {{ item.resource.label }}
+              </a>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="v2-action-bar">
+    <a href="{{ url_for('skill_gap') }}" class="v2-btn-outline"><i class="fas fa-redo"></i> Analyse Again</a>
+    <a href="{{ url_for('smart_questions') }}" class="v2-btn-primary"><i class="fas fa-question-circle"></i> Interview Questions</a>
+  </div>
+
+  {% endif %}
+  {% if error %}<div class="v2-alert v2-alert-danger"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>{% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function handleFile(input) {
+  const name = input.files[0]?.name || '';
+  document.getElementById('uploadText').textContent = name ? 'File ready to upload' : 'Drop your resume here';
+  const badge = document.getElementById('fileBadge');
+  document.getElementById('fileName').textContent = name;
+  badge.classList.toggle('hidden', !name);
+}
+function loadRoles(cat, targetId) {
+  fetch(`/get_roles?category=${encodeURIComponent(cat)}`)
+    .then(r => r.json()).then(roles => {
+      const sel = document.getElementById(targetId);
+      sel.innerHTML = '<option value="None">— Select role —</option>';
+      roles.forEach(r => sel.innerHTML += `<option value="${r}">${r}</option>`);
+    });
+}
+const zone = document.getElementById('uploadZone');
+if (zone) {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('v2-drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('v2-drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('v2-drag-over');
+    const fi = document.getElementById('resumeFile');
+    fi.files = e.dataTransfer.files; handleFile(fi);
+  });
+}
+</script>
+{% endblock %}
