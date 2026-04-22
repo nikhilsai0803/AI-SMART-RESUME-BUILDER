@@ -7,7 +7,7 @@
 ![Hugging Face](https://img.shields.io/badge/🤗%20Hugging%20Face-Free%20API-orange)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-ML%20Powered-f7931e?logo=scikit-learn&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green)
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Hugging%20Face%20Spaces-yellow)](https://huggingface.co/spaces/sharmasai12/AI-SMART-RESUME-BUILDER)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Hugging%20Face%20Spaces-yellow)](https://huggingface.co/spaces/sharmasai12/Smart-resume)
 
 **An AI-powered resume analysis, building, and optimization platform for job seekers and recruiters.**
 
@@ -55,6 +55,7 @@
 - **Document Parsing:** pdfminer.six, PyPDF2, python-docx
 - **Resume Generation:** python-docx
 - **Job Search:** Adzuna API (free tier)
+- **Database:** SQLite (persistent via `/data` volume on Hugging Face Spaces)
 - **Frontend:** Jinja2 templates, Bootstrap, vanilla JS
 
 ---
@@ -181,15 +182,16 @@ Smart-AI-Resume-Builder/
 
 The app is deployed on **Hugging Face Spaces**.
 
-👉 **[Try the Live Demo](https://huggingface.co/spaces/sharmasai12/AI-SMART-RESUME-BUILDER)**
+👉 **[Try the Live Demo](https://huggingface.co/spaces/sharmasai12/Smart-resume)**
 
 ---
 
 ## 🔒 Notes on Production Use
 
-- User data is stored **in-memory** (lost on restart). For production, replace `USERS` dict with a proper database (SQLite, PostgreSQL, etc.)
+- User data is stored in **SQLite** (`/data/app.db`) — persists across restarts on Hugging Face Spaces via the persistent volume
 - Set a strong `FLASK_SECRET_KEY` in production — never use the default
-- The `uploads/` folder is ephemeral — consider using cloud storage for uploaded files
+- The `uploads/` folder is ephemeral — uploaded resumes are processed and immediately deleted, nothing is stored
+- Sessions use `SameSite=None; Secure` cookies with `ProxyFix` for compatibility with the Hugging Face HTTPS proxy
 
 ---
 
