@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}Resume Rewrite Suggestions – ResumeLens AI{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-inner">
+    <h1 class="page-title"><i class="fas fa-pen-to-square"></i> Rewrite Suggestions</h1>
+    <p class="page-subtitle">Bullet-by-bullet improvements: stronger verbs, metrics, and impact statements</p>
+  </div>
+</div>
+
+<div class="content-wrap">
+
+  {% if not result %}
+  <div class="v2-upload-card">
+    <div class="v2-upload-glow" style="background:radial-gradient(ellipse at 50% 0%, rgba(245,158,11,0.18) 0%, transparent 70%)"></div>
+    <form method="POST" enctype="multipart/form-data">
+      <div class="v2-dropzone" id="uploadZone" onclick="document.getElementById('resumeFile').click()">
+        <input type="file" name="resume" id="resumeFile" accept=".pdf,.docx" hidden onchange="handleFile(this)">
+        <div class="v2-drop-icon" style="color:var(--warning)"><i class="fas fa-file-pen"></i></div>
+        <div class="v2-drop-title" id="uploadText">Drop your resume here</div>
+        <div class="v2-drop-sub">PDF or DOCX &nbsp;·&nbsp; Max 10 MB &nbsp;·&nbsp; Click to browse</div>
+        <div class="v2-file-badge hidden" id="fileBadge"><i class="fas fa-file-check"></i> <span id="fileName"></span></div>
+      </div>
+      <div class="v2-form-row">
+        <div class="v2-form-group">
+          <label class="v2-label">Category <span style="color:var(--text3);font-size:.8rem">(optional)</span></label>
+          <select name="category" id="catSel" class="v2-select" onchange="loadRoles(this.value,'roleSel')">
+            <option value="None">— Select category —</option>
+            {% for cat in categories %}<option value="{{ cat }}">{{ cat }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="v2-form-group">
+          <label class="v2-label">Target Role <span style="color:var(--text3);font-size:.8rem">(optional)</span></label>
+          <select name="role" id="roleSel" class="v2-select">
+            <option value="None">— Select role —</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit" class="v2-submit-btn" style="background:linear-gradient(135deg,#f59e0b,#d97706)">
+        <i class="fas fa-wand-magic-sparkles"></i> Get Rewrite Suggestions
+      </button>
+    </form>
+  </div>
+
+  {% else %}
+
+  <div class="v2-stats-row">
+    <div class="v2-stat-pill"><i class="fas fa-edit" style="color:var(--accent)"></i> <strong>{{ result.total_improvements }}</strong> bullets analysed</div>
+    <div class="v2-stat-pill"><i class="fas fa-bolt" style="color:var(--warning)"></i> <strong>{{ result.quick_wins|length }}</strong> quick wins</div>
+    <div class="v2-stat-pill"><i class="fas fa-arrow-trend-up" style="color:var(--success)"></i> High impact improvements</div>
+  </div>
+
+  {% if result.quick_wins %}
+  <div class="v2-card" style="border-color:rgba(245,158,11,0.3)">
+    <div class="v2-card-hdr v2-hdr-yellow"><i class="fas fa-bolt"></i> Quick Wins — Highest Impact</div>
+    <div class="v2-rw-list">
+      {% for qw in result.quick_wins %}
+      <div class="v2-rw-pair v2-rw-featured">
+        <div class="v2-rw-side v2-rw-before">
+          <div class="v2-rw-label v2-rw-label-before">Before</div>
+          <p class="v2-rw-text">{{ qw.original }}</p>
+          <div class="v2-rw-score">{{ qw.score_before }}/100</div>
+        </div>
+        <div class="v2-rw-arrow"><i class="fas fa-arrow-right"></i></div>
+        <div class="v2-rw-side v2-rw-after">
+          <div class="v2-rw-label v2-rw-label-after">Suggested</div>
+          <p class="v2-rw-text">{{ qw.improved }}</p>
+          <div class="v2-rw-score v2-score-up">{{ qw.score_after }}/100 <span class="v2-delta">+{{ qw.score_after - qw.score_before }}</span></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if result.summary_suggestion %}
+  <div class="v2-card">
+    <div class="v2-card-hdr v2-hdr-purple"><i class="fas fa-id-card"></i> AI-Suggested Professional Summary</div>
+    <div class="v2-summary-box">{{ result.summary_suggestion }}</div>
+    <div style="padding:.75rem 1.25rem">
+      <button class="v2-btn-outline v2-btn-sm" onclick="copySummary()"><i class="fas fa-copy"></i> Copy to clipboard</button>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if result.bullet_rewrites %}
+  <div class="v2-card">
+    <div class="v2-card-hdr"><i class="fas fa-list-check"></i> All Bullet Improvements</div>
+    <div class="v2-rw-list">
+      {% for item in result.bullet_rewrites %}
+      <div class="v2-rw-pair">
+        <div class="v2-rw-side v2-rw-before">
+          <div class="v2-rw-label v2-rw-label-before">Original</div>
+          <p class="v2-rw-text">{{ item.original }}</p>
+          <ul class="v2-issue-list">{% for issue in item.issues %}<li>{{ issue }}</li>{% endfor %}</ul>
+        </div>
+        <div class="v2-rw-arrow"><i class="fas fa-arrow-right"></i></div>
+        <div class="v2-rw-side v2-rw-after">
+          <div class="v2-rw-label v2-rw-label-after">Improved</div>
+          <p class="v2-rw-text">{{ item.improved }}</p>
+          <div class="v2-rw-score v2-score-up">{{ item.score_before }} → {{ item.score_after }} <span class="v2-delta">+{{ item.score_after - item.score_before }}</span></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="v2-action-bar">
+    <a href="{{ url_for('rewrite') }}" class="v2-btn-outline"><i class="fas fa-redo"></i> Try Another</a>
+    <a href="{{ url_for('builder') }}" class="v2-btn-primary"><i class="fas fa-file-alt"></i> Rebuild Resume</a>
+  </div>
+
+  {% endif %}
+  {% if error %}<div class="v2-alert v2-alert-danger"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>{% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function handleFile(input) {
+  const name = input.files[0]?.name || '';
+  document.getElementById('uploadText').textContent = name ? 'File ready to upload' : 'Drop your resume here';
+  const badge = document.getElementById('fileBadge');
+  document.getElementById('fileName').textContent = name;
+  badge.classList.toggle('hidden', !name);
+}
+function loadRoles(cat, targetId) {
+  fetch(`/get_roles?category=${encodeURIComponent(cat)}`)
+    .then(r => r.json()).then(roles => {
+      const sel = document.getElementById(targetId);
+      sel.innerHTML = '<option value="None">— Any —</option>';
+      roles.forEach(r => sel.innerHTML += `<option value="${r}">${r}</option>`);
+    });
+}
+function copySummary() {
+  navigator.clipboard.writeText(document.querySelector('.v2-summary-box').textContent)
+    .then(() => { const b = event.target.closest('button'); b.innerHTML='<i class="fas fa-check"></i> Copied!'; setTimeout(()=>b.innerHTML='<i class="fas fa-copy"></i> Copy to clipboard',2000); });
+}
+const zone = document.getElementById('uploadZone');
+if (zone) {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('v2-drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('v2-drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('v2-drag-over');
+    const fi = document.getElementById('resumeFile');
+    fi.files = e.dataTransfer.files; handleFile(fi);
+  });
+}
+</script>
+{% endblock %}

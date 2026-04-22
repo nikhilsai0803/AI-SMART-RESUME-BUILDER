@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+{% block title %}Free ATS Score Check — ResumeLens AI{% endblock %}
+
+{% block public_content %}
+<section class="quick-ats-section">
+  <div class="quick-ats-wrap">
+
+    <div class="quick-ats-hero">
+      <span class="badge-pill">
+        <span class="pulse-dot"></span> Free · No Account Needed
+      </span>
+      <h1>Check Your <span class="grad">ATS Score</span><br>Instantly — Free</h1>
+      <p class="dim">Upload your resume and see how it scores with real ATS algorithms. No account required.</p>
+      {% if global_stats and global_stats.total_analyses > 0 %}
+      <p class="qa-social-proof">
+        <i class="fas fa-users"></i>
+        <strong>{{ "{:,}".format(global_stats.total_analyses) }}</strong> analyses done &nbsp;·&nbsp;
+        Best ATS score: <strong class="text-success">{{ global_stats.best_ats }}</strong>
+      </p>
+      {% endif %}
+    </div>
+
+    <div class="quick-ats-grid">
+
+      <!-- Left: upload OR score result -->
+      <div class="glass-card qa-upload-card">
+
+        {% if not result %}
+        <h3 class="card-title"><i class="fas fa-upload"></i> Upload Your Resume</h3>
+        <form id="qaForm" action="{{ url_for('quick_ats_post') }}" method="POST" enctype="multipart/form-data">
+
+          <div class="fg">
+            <label>Job Category <span class="hint">(optional — improves accuracy)</span></label>
+            <div class="sel-wrap">
+              <select class="fsel" id="qaCat" name="category">
+                {% for c in categories %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+              </select>
+              <i class="fas fa-chevron-down sel-ico"></i>
+            </div>
+          </div>
+
+          <div class="fg" id="qaRoleBox" style="display:none">
+            <label>Specific Role</label>
+            <div class="sel-wrap">
+              <select class="fsel" id="qaRole" name="role">
+                <option value="None">None</option>
+              </select>
+              <i class="fas fa-chevron-down sel-ico"></i>
+            </div>
+          </div>
+
+          <div class="fg">
+            <label>Resume File <span class="req">*</span></label>
+            <div class="dropzone" id="qaDz" onclick="document.getElementById('qaFi').click()">
+              <input type="file" id="qaFi" name="resume" accept=".pdf,.docx" required style="display:none"/>
+              <div id="qaDzIdle">
+                <div class="dz-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                <p class="dz-main">Drop your resume here</p>
+                <p class="dz-sub">or <span class="dz-link">browse files</span></p>
+                <p class="dz-hint">PDF or DOCX · Max 10 MB</p>
+              </div>
+              <div id="qaDzSel" class="hidden">
+                <div class="file-row">
+                  <i class="fas fa-file-alt"></i>
+                  <div class="file-info">
+                    <span id="qaFName"></span>
+                    <span id="qaFSize" class="dim"></span>
+                  </div>
+                  <button type="button" id="qaFRm" class="rm-btn"><i class="fas fa-times"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button class="glow-btn w100" type="submit" id="qaSubBtn">
+            <i class="fas fa-search"></i>
+            <span id="qaSubTxt">Get My ATS Score — Free</span>
+          </button>
+
+          <p class="qa-privacy"><i class="fas fa-shield-alt"></i> File deleted immediately after analysis · No account needed</p>
+        </form>
+
+        {% else %}
+        <h3 class="card-title"><i class="fas fa-chart-bar"></i> Your ATS Score</h3>
+
+        {% set sc = result.ats_score | int %}
+        {% set cl = sc | score_color %}
+
+        <div class="qa-score-block">
+          <div class="speedometer qa-speedo">
+            <svg class="speed-svg" viewBox="0 0 200 130">
+              <path d="M 20 110 A 80 80 0 0 1 180 110" class="speed-track"/>
+              {% set dash = (sc / 100 * 251.2) | round(1) %}
+              <path d="M 20 110 A 80 80 0 0 1 180 110" class="speed-fill speed-{{ cl }}"
+                style="stroke-dasharray: {{ dash }} 251.2"/>
+              {% set angle = -90 + (sc / 100 * 180) %}
+              <line x1="100" y1="110"
+                x2="{{ (100 + 65 * (angle | cos_rad)) | round(1) }}"
+                y2="{{ (110 + 65 * (angle | sin_rad)) | round(1) }}"
+                class="speed-needle"/>
+              <circle cx="100" cy="110" r="6" class="speed-hub"/>
+            </svg>
+            <div class="speed-val text-{{ cl }}">{{ sc }}</div>
+            <div class="speed-label badge-{{ cl }}">
+              {% if sc >= 80 %}Excellent{% elif sc >= 60 %}Good{% else %}Needs Work{% endif %}
+            </div>
+          </div>
+
+          {% set ss = result.get("section_scores", {}) %}
+          {% if ss %}
+          <div class="qa-bars">
+            {% for sec, val in ss.items() %}
+            <div class="bar-row">
+              <span class="bar-label">{{ sec | capitalize }}</span>
+              <div class="bar-track">
+                {% set safe_val = [val|int, 0]|max %}
+                <div class="bar-fill bar-{{ safe_val | score_color }}" style="width:{{ safe_val }}%"></div>
+              </div>
+              <span class="bar-pct text-{{ [val|int, 0]|max | score_color }}">{{ [val|int, 0]|max }}%</span>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+
+        {% if result.get("skills") %}
+        <div class="qa-skills-preview">
+          <p class="dim" style="font-size:.8rem;margin-bottom:.5rem"><i class="fas fa-code"></i> Skills detected in your resume</p>
+          <div class="tag-cloud">
+            {% for s in result.skills[:10] %}<span class="tag tag-primary">{{ s }}</span>{% endfor %}
+            {% if result.skills|length > 10 %}<span class="tag tag-secondary">+{{ result.skills|length - 10 }} more</span>{% endif %}
+          </div>
+        </div>
+        {% endif %}
+
+
+        <a href="{{ url_for('quick_ats') }}" class="outline-btn w100" style="margin-top:1.25rem">
+          <i class="fas fa-redo"></i> Check Another Resume
+        </a>
+        {% endif %}
+      </div>
+
+      <!-- Right panel -->
+      <div class="qa-right-col">
+
+        {% if result %}
+        <!-- Blurred locked analysis card -->
+        <div class="glass-card qa-locked-card">
+          <div class="qa-locked-header">
+            <i class="fas fa-lock qa-lock-icon"></i>
+            <h3>Full ATS Analysis</h3>
+            <p class="dim" style="font-size:.87rem">Sign in to see your complete report and make your resume recruiter-ready.</p>
+          </div>
+
+          <div class="qa-blur-wrap">
+            <div class="qa-blur-content">
+              <div class="qa-fake-section">
+                <p class="qa-fake-label"><i class="fas fa-crosshairs"></i> Skill Gap for Your Role</p>
+                <div class="qa-fake-tags">
+                  <span class="tag tag-danger qa-fake-tag">Docker</span>
+                  <span class="tag tag-danger qa-fake-tag">AWS</span>
+                  <span class="tag tag-danger qa-fake-tag">Kubernetes</span>
+                  <span class="tag tag-warning qa-fake-tag">REST API</span>
+                  <span class="tag tag-warning qa-fake-tag">GraphQL</span>
+                </div>
+              </div>
+              <div class="qa-fake-section" style="margin-top:.9rem">
+                <p class="qa-fake-label"><i class="fas fa-lightbulb text-warning"></i> AI Improvement Tips</p>
+                <div class="qa-fake-lines">
+                  <div class="qa-fake-line" style="width:92%"></div>
+                  <div class="qa-fake-line" style="width:78%"></div>
+                  <div class="qa-fake-line" style="width:85%"></div>
+                  <div class="qa-fake-line" style="width:65%"></div>
+                </div>
+              </div>
+              <div class="qa-fake-section" style="margin-top:.9rem">
+                <p class="qa-fake-label"><i class="fas fa-pen-to-square"></i> Rewrite Suggestions</p>
+                <div class="qa-fake-lines">
+                  <div class="qa-fake-line" style="width:88%"></div>
+                  <div class="qa-fake-line" style="width:72%"></div>
+                </div>
+              </div>
+            </div>
+            <div class="qa-blur-overlay">
+              <div class="qa-blur-badge">
+                <i class="fas fa-lock"></i>
+                <span>Sign in to unlock</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="qa-locked-cta">
+            <p style="font-size:.8rem;color:var(--text3);text-align:center;margin-bottom:.75rem">
+              Free account — no credit card required
+            </p>
+            <a href="{{ url_for('signup') }}" class="glow-btn w100">
+              <i class="fas fa-user-plus"></i> Create Free Account
+            </a>
+            <a href="{{ url_for('login') }}" class="outline-btn w100" style="margin-top:.5rem">
+              Already have an account? Sign In
+            </a>
+          </div>
+        </div>
+
+        <div class="glass-card" style="margin-top:1rem">
+          <h4><i class="fas fa-rocket text-info"></i> What you unlock</h4>
+          <ul class="qa-upsell-list">
+            <li><i class="fas fa-check-circle text-success"></i> Full skill gap vs. your target role</li>
+            <li><i class="fas fa-check-circle text-success"></i> AI-powered improvement feedback</li>
+            <li><i class="fas fa-check-circle text-success"></i> Resume rewrite suggestions</li>
+            <li><i class="fas fa-check-circle text-success"></i> Interview question generator</li>
+            <li><i class="fas fa-check-circle text-success"></i> Resume builder — download DOCX</li>
+          </ul>
+        </div>
+
+        {% else %}
+        <div class="glass-card">
+          <h4><i class="fas fa-star text-warning"></i> Free — no account needed</h4>
+          <ul class="tips-list">
+            <li><i class="fas fa-check"></i> Instant ATS compatibility score</li>
+            <li><i class="fas fa-check"></i> Section-by-section breakdown</li>
+            <li><i class="fas fa-check"></i> Skills detected in your resume</li>
+            <li><i class="fas fa-check"></i> One quick improvement tip</li>
+          </ul>
+        </div>
+        <div class="glass-card" style="margin-top:1rem">
+          <h4><i class="fas fa-lock text-info"></i> Sign in to unlock more</h4>
+          <ul class="tips-list">
+            <li><i class="fas fa-arrow-right dim"></i> Full skill gap analysis</li>
+            <li><i class="fas fa-arrow-right dim"></i> AI feedback on every section</li>
+            <li><i class="fas fa-arrow-right dim"></i> Resume rewrite help</li>
+            <li><i class="fas fa-arrow-right dim"></i> Interview prep questions</li>
+            <li><i class="fas fa-arrow-right dim"></i> Resume builder + DOCX download</li>
+          </ul>
+          <div style="margin-top:1rem;display:flex;gap:.5rem;flex-wrap:wrap">
+            <a href="{{ url_for('signup') }}" class="glow-btn" style="flex:1;min-width:110px">Sign Up Free</a>
+            <a href="{{ url_for('login') }}" class="outline-btn" style="flex:1;min-width:90px">Sign In</a>
+          </div>
+        </div>
+        <div class="glass-card" style="margin-top:1rem">
+          <h4><i class="fas fa-lightbulb text-warning"></i> Tips for better scores</h4>
+          <ul class="tips-list">
+            <li><i class="fas fa-check"></i> Use standard headings: Experience, Education, Skills</li>
+            <li><i class="fas fa-check"></i> Quantify achievements (e.g. "improved by 30%")</li>
+            <li><i class="fas fa-check"></i> Avoid tables and images — ATS can't read them</li>
+            <li><i class="fas fa-check"></i> Include LinkedIn and full contact info</li>
+          </ul>
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const qaCat = document.getElementById("qaCat");
+const qaRB  = document.getElementById("qaRoleBox");
+const qaRS  = document.getElementById("qaRole");
+if (qaCat) {
+  qaCat.addEventListener("change", function() {
+    if (this.value === "None") { qaRB.style.display = "none"; return; }
+    fetch("/get_roles?category=" + encodeURIComponent(this.value))
+      .then(r => r.json()).then(roles => {
+        qaRS.innerHTML = '<option value="None">None</option>';
+        roles.forEach(r => {
+          const o = document.createElement("option");
+          o.value = r; o.textContent = r; qaRS.appendChild(o);
+        });
+        qaRB.style.display = "";
+      });
+  });
+}
+const qaFi  = document.getElementById("qaFi");
+const qaDz  = document.getElementById("qaDz");
+const qaDzI = document.getElementById("qaDzIdle");
+const qaDzS = document.getElementById("qaDzSel");
+function qaShowF(f) {
+  document.getElementById("qaFName").textContent = f.name;
+  document.getElementById("qaFSize").textContent = (f.size / 1024).toFixed(1) + " KB";
+  if (qaDzS) qaDzS.classList.remove("hidden");
+  if (qaDzI) qaDzI.style.display = "none";
+}
+if (qaFi) qaFi.addEventListener("change", function() { if (this.files[0]) qaShowF(this.files[0]); });
+const qaFRm = document.getElementById("qaFRm");
+if (qaFRm) {
+  qaFRm.addEventListener("click", function(e) {
+    e.stopPropagation();
+    qaFi.value = "";
+    if (qaDzS) qaDzS.classList.add("hidden");
+    if (qaDzI) qaDzI.style.display = "";
+  });
+}
+if (qaDz) {
+  qaDz.addEventListener("dragover", e => { e.preventDefault(); qaDz.classList.add("dz-over"); });
+  qaDz.addEventListener("dragleave", () => qaDz.classList.remove("dz-over"));
+  qaDz.addEventListener("drop", e => {
+    e.preventDefault(); qaDz.classList.remove("dz-over");
+    const f = e.dataTransfer.files[0];
+    if (f) { const dt = new DataTransfer(); dt.items.add(f); qaFi.files = dt.files; qaShowF(f); }
+  });
+}
+const qaForm = document.getElementById("qaForm");
+if (qaForm) {
+  qaForm.addEventListener("submit", function() {
+    const b = document.getElementById("qaSubBtn");
+    document.getElementById("qaSubTxt").textContent = "Analyzing...";
+    b.disabled = true;
+  });
+}
+</script>
+{% endblock %}

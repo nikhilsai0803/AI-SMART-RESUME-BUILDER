@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Job Search — ResumeLens AI{% endblock %}
+{% block content %}
+
+<div class="dash-header">
+  <div>
+    <h1><span class="grad">Job Search</span></h1>
+    <p class="dim">Find relevant job openings powered by live listings.</p>
+  </div>
+</div>
+
+<!-- ── Search Form ───────────────────────────────────────────────── -->
+<div class="glass-card" style="margin-bottom:1.5rem">
+  <h3 class="card-title"><i class="fas fa-search"></i> Search Jobs</h3>
+  <form method="POST" action="{{ url_for('job_search') }}" id="jsForm">
+    <div class="form-row">
+      <div class="fg">
+        <label>Job Title / Keywords <span class="req">*</span></label>
+        <div class="input-wrap">
+          <i class="fas fa-briefcase input-ico"></i>
+          <input type="text" name="query" class="finput has-ico"
+            placeholder="Software Engineer, Data Scientist, React Developer…"
+            value="{{ query }}" required/>
+        </div>
+      </div>
+      <div class="fg">
+        <label>Location <span class="hint">(optional)</span></label>
+        <div class="input-wrap">
+          <i class="fas fa-map-marker-alt input-ico"></i>
+          <input type="text" name="location" class="finput has-ico"
+            placeholder="Hyderabad, Bangalore, Remote…"
+            value="{{ location_q }}"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Popular searches -->
+    <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.25rem">
+      <span class="dim" style="font-size:.82rem;align-self:center">Popular:</span>
+      {% for s in ['Software Engineer','Data Analyst','Full Stack Developer','Product Manager','UI/UX Designer','DevOps Engineer'] %}
+      <button type="button" class="skill-chip"
+        onclick="document.querySelector('[name=query]').value='{{ s }}'">{{ s }}</button>
+      {% endfor %}
+    </div>
+
+    <button class="glow-btn" type="submit" id="searchBtn">
+      <i class="fas fa-search"></i>
+      <span id="searchTxt">Search Jobs</span>
+    </button>
+  </form>
+</div>
+
+<!-- ── Error ─────────────────────────────────────────────────────── -->
+{% if error %}
+<div class="glass-card" style="margin-bottom:1.5rem">
+  <div class="flash flash-error" style="margin:0">
+    <i class="fas fa-exclamation-circle"></i>
+    <span>{{ error }}</span>
+  </div>
+  <div style="margin-top:1rem;padding:1rem;background:rgba(255,255,255,.03);border-radius:8px">
+    <p style="font-size:.9rem;margin:0"><strong>To enable live job search:</strong></p>
+    <ol style="font-size:.88rem;color:var(--text-muted);margin:.5rem 0 0;padding-left:1.25rem;line-height:1.8">
+      <li>Sign up at <a href="https://developer.adzuna.com/" target="_blank" rel="noopener" class="text-accent">developer.adzuna.com</a> (free)</li>
+      <li>Get your <code>App ID</code> and <code>App Key</code></li>
+      <li>Set env vars: <code>ADZUNA_APP_ID</code> and <code>ADZUNA_APP_KEY</code></li>
+    </ol>
+  </div>
+</div>
+{% endif %}
+
+<!-- ── Results ────────────────────────────────────────────────────── -->
+{% if results %}
+<div class="rec-stats" style="margin-bottom:.5rem">
+  <div class="stat-chip">
+    <span class="stat-n">{{ results|length }}</span>
+    <span>Jobs Found</span>
+  </div>
+  {% if query %}
+  <span class="dim" style="font-size:.9rem">Results for "<strong>{{ query }}</strong>"{% if location_q %} in <strong>{{ location_q }}</strong>{% endif %}</span>
+  {% endif %}
+</div>
+<p class="dim" style="font-size:.78rem;margin-bottom:.75rem">
+  <i class="fas fa-info-circle"></i>
+  Showing curated sample listings. For live jobs, set <code>ADZUNA_APP_ID</code> &amp; <code>ADZUNA_APP_KEY</code> in your <code>.env</code> file
+  (<a href="https://developer.adzuna.com/" target="_blank" rel="noopener" class="text-accent">free at adzuna.com</a>).
+</p>
+
+<div class="job-grid">
+  {% for job in results %}
+  <div class="job-card glass-card">
+    <div class="job-header">
+      <div class="job-meta">
+        <h4 class="job-title">{{ job.title }}</h4>
+        <span class="job-company"><i class="fas fa-building"></i> {{ job.company }}</span>
+      </div>
+      <a href="{{ job.url }}" target="_blank" rel="noopener" class="apply-btn glow-btn">
+        Apply <i class="fas fa-external-link-alt"></i>
+      </a>
+    </div>
+    <div class="job-tags" style="margin:.5rem 0">
+      <span class="tag tag-primary"><i class="fas fa-map-marker-alt"></i> {{ job.location }}</span>
+      {% if job.salary != 'Not specified' %}
+      <span class="tag tag-success"><i class="fas fa-rupee-sign"></i> {{ job.salary }}</span>
+      {% endif %}
+      {% if job.date %}
+      <span class="tag tag-muted"><i class="fas fa-calendar-alt"></i> {{ job.date }}</span>
+      {% endif %}
+    </div>
+    {% if job.desc %}
+    <p class="job-desc dim">{{ job.desc }}</p>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+{% elif query and not error %}
+<div class="empty-state glass-card">
+  <i class="fas fa-search"></i>
+  <h3>No jobs found</h3>
+  <p>Try different keywords or a broader location.</p>
+</div>
+
+{% elif not query %}
+<!-- Landing state -->
+<div class="features-grid" style="margin-top:1rem">
+  {% for item in [
+    ('fas fa-robot','AI-Ranked Results','Jobs sorted by relevance to your search'),
+    ('fas fa-map-marker-alt','Location Filtering','Search by city, state, or "Remote"'),
+    ('fas fa-rupee-sign','Salary Insights','See salary ranges where available'),
+    ('fas fa-external-link-alt','Direct Apply','One click to the original job listing'),
+  ] %}
+  <div class="feat-block glass-card">
+    <div class="feat-icon-wrap accent-purple"><i class="{{ item[0] }}"></i></div>
+    <h3>{{ item[1] }}</h3>
+    <p>{{ item[2] }}</p>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('jsForm').addEventListener('submit', function() {
+  const btn = document.getElementById('searchBtn');
+  document.getElementById('searchTxt').textContent = 'Searching…';
+  btn.disabled = true;
+});
+</script>
+
+<style>
+.skill-chip {
+  padding:.35rem .9rem;border-radius:2rem;
+  border:1px solid var(--accent);color:var(--accent);
+  background:rgba(99,102,241,.08);font-size:.82rem;cursor:pointer;transition:.2s
+}
+.skill-chip:hover { background:var(--accent);color:#fff }
+
+.job-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1rem }
+.job-card { padding:1.25rem!important }
+.job-header { display:flex;justify-content:space-between;align-items:flex-start;gap:1rem }
+.job-meta { flex:1;min-width:0 }
+.job-title { margin:0 0 .2rem;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis }
+.job-company { font-size:.85rem;color:var(--text-muted) }
+.apply-btn { padding:.45rem 1rem!important;font-size:.83rem!important;white-space:nowrap }
+.job-desc { font-size:.82rem;line-height:1.5;margin:.5rem 0 0;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden }
+.text-accent { color:var(--accent) }
+</style>
+{% endblock %}

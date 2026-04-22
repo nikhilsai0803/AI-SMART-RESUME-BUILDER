@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block title %}About — ResumeLens AI{% endblock %}
+
+{# Renders for both logged-in (sidebar layout) and public (landing layout) #}
+{% set _body %}
+<div class="about-wrap">
+
+  <!-- Hero -->
+  <div class="about-hero">
+    <div class="about-hero-glow"></div>
+    <span class="badge-pill"><span class="pulse-dot"></span> Open Source · Free to Use</span>
+    <h1>About <span class="grad">ResumeLens AI</span></h1>
+    <p class="dim">An AI-powered resume platform built to level the playing field for every job seeker.</p>
+  </div>
+
+  <!-- Vision -->
+  <section class="glass-card about-vision">
+    <div class="about-vision-icon"><i class="fas fa-lightbulb"></i></div>
+    <h2>The Vision</h2>
+    <p>
+      Most job seekers never know why their resume got filtered out. ATS systems silently reject
+      qualified candidates based on keywords, formatting, and structure — not talent. ResumeLens AI
+      was built to change that: give everyone the same feedback that expensive career coaches charge for,
+      instantly, for free.
+    </p>
+  </section>
+
+  <!-- What's inside -->
+  <div class="about-cards">
+
+    <div class="about-card">
+      <div class="about-card-icon accent-purple"><i class="fas fa-robot"></i></div>
+      <div>
+        <h3>ATS Scoring</h3>
+        <p>ML-powered compatibility score using a TF-IDF model trained on real job descriptions. Section-level breakdown for Contact, Skills, Experience, and Education.</p>
+      </div>
+    </div>
+
+    <div class="about-card">
+      <div class="about-card-icon accent-cyan"><i class="fas fa-file-alt"></i></div>
+      <div>
+        <h3>Resume Builder</h3>
+        <p>Structured multi-section builder that exports a properly formatted DOCX file — ready to send to recruiters without any extra editing.</p>
+      </div>
+    </div>
+
+    <div class="about-card">
+      <div class="about-card-icon accent-green"><i class="fas fa-comments"></i></div>
+      <div>
+        <h3>AI Feedback</h3>
+        <p>Gemini-powered suggestions on every section of your resume — what's working, what's weak, and specific rewrites to make it stronger.</p>
+      </div>
+    </div>
+
+    <div class="about-card">
+      <div class="about-card-icon accent-orange"><i class="fas fa-crosshairs"></i></div>
+      <div>
+        <h3>Skill Gap Analysis</h3>
+        <p>Compare your resume against any target role. See exactly which skills you're missing and get a prioritised list of what to learn next.</p>
+      </div>
+    </div>
+
+    <div class="about-card">
+      <div class="about-card-icon accent-pink"><i class="fas fa-question-circle"></i></div>
+      <div>
+        <h3>Interview Prep</h3>
+        <p>Generate role-specific interview questions from your resume. Practise answers before you walk into the room.</p>
+      </div>
+    </div>
+
+    <div class="about-card">
+      <div class="about-card-icon accent-blue"><i class="fas fa-users"></i></div>
+      <div>
+        <h3>Recruiter Screening</h3>
+        <p>Bulk upload 50+ resumes, define criteria (education, skills, ATS threshold), and get an AI-ranked shortlist with CSV export in seconds.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Privacy -->
+  <section class="glass-card about-privacy">
+    <div class="about-privacy-icon"><i class="fas fa-shield-alt"></i></div>
+    <div>
+      <h3>Privacy by design</h3>
+      <p>Every resume you upload is parsed in memory and deleted immediately after analysis. Nothing is stored on disk, nothing is shared. No tracking, no analytics, no ads.</p>
+    </div>
+  </section>
+
+  <!-- Tech stack -->
+  <section class="glass-card about-tech">
+    <h3><i class="fas fa-code"></i> Built with</h3>
+    <div class="about-tech-pills">
+      <span class="tag tag-primary">Python 3.10+</span>
+      <span class="tag tag-primary">Flask</span>
+      <span class="tag tag-primary">scikit-learn</span>
+      <span class="tag tag-primary">spaCy</span>
+      <span class="tag tag-primary">pdfminer</span>
+      <span class="tag tag-primary">python-docx</span>
+      <span class="tag tag-primary">Google Gemini API</span>
+      <span class="tag tag-secondary">Vanilla JS</span>
+      <span class="tag tag-secondary">Custom CSS dark theme</span>
+      <span class="tag tag-secondary">Font Awesome</span>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  {% if not current_user.is_authenticated %}
+  <div class="dual-cta" style="margin-top:2.5rem">
+    <div class="cta-card cta-user">
+      <i class="fas fa-user-astronaut"></i>
+      <h3>Job Seekers</h3>
+      <p>Get your ATS score, fix your resume, and land more interviews — free.</p>
+      <a href="{{ url_for('signup') }}?role=user" class="glow-btn">Create Free Account <i class="fas fa-arrow-right"></i></a>
+    </div>
+    <div class="cta-card cta-recruiter">
+      <i class="fas fa-building"></i>
+      <h3>Recruiters</h3>
+      <p>Screen 50+ candidates in seconds with AI-powered criteria matching.</p>
+      <a href="{{ url_for('signup') }}?role=recruiter" class="outline-btn">Open Recruiter Portal <i class="fas fa-arrow-right"></i></a>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endset %}
+
+{% block public_content %}{{ _body }}{% endblock %}
+{% block content %}{{ _body }}{% endblock %}
+
+{% block styles %}
+<style>
+.about-wrap        { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+.about-hero        { text-align: center; padding: 3rem 1rem 2.5rem; position: relative; }
+.about-hero-glow   {
+  position: absolute; inset: 0; background: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(108,99,255,.18), transparent);
+  pointer-events: none;
+}
+.about-hero h1     { font-size: clamp(1.9rem, 4vw, 2.8rem); margin: 1rem 0 .75rem; }
+.about-hero .dim   { max-width: 520px; margin: 0 auto; }
+
+.about-vision      { text-align: center; max-width: 700px; margin: 0 auto; padding: 2.5rem !important; }
+.about-vision-icon { font-size: 2.2rem; color: var(--accent); margin-bottom: .9rem; }
+.about-vision h2   { font-family: var(--font-head); font-size: 1.5rem; font-weight: 700; margin-bottom: .75rem; }
+.about-vision p    { color: var(--text2); line-height: 1.8; font-size: .975rem; }
+
+.about-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-top: 2rem;
+}
+.about-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.4rem 1.25rem;
+  transition: border-color .2s, transform .2s;
+}
+.about-card:hover  { border-color: var(--border-hov); transform: translateY(-2px); }
+.about-card-icon   {
+  width: 42px; height: 42px; flex-shrink: 0;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+}
+.about-card h3     { font-family: var(--font-head); font-size: 1rem; font-weight: 700; margin-bottom: .35rem; }
+.about-card p      { font-size: .85rem; color: var(--text2); line-height: 1.65; margin: 0; }
+
+.about-privacy {
+  display: flex; align-items: flex-start; gap: 1.25rem;
+  margin-top: 1.5rem; padding: 1.5rem 1.75rem !important;
+}
+.about-privacy-icon { font-size: 1.8rem; color: var(--success); flex-shrink: 0; margin-top: .1rem; }
+.about-privacy h3   { font-family: var(--font-head); font-size: 1.05rem; font-weight: 700; margin-bottom: .4rem; }
+.about-privacy p    { font-size: .875rem; color: var(--text2); line-height: 1.7; margin: 0; }
+
+.about-tech        { margin-top: 1.5rem; padding: 1.5rem 1.75rem !important; }
+.about-tech h3     { font-family: var(--font-head); font-size: 1rem; font-weight: 700; margin-bottom: 1rem; }
+.about-tech h3 i   { margin-right: .4rem; color: var(--accent); }
+.about-tech-pills  { display: flex; flex-wrap: wrap; gap: .5rem; }
+
+@media (max-width: 640px) {
+  .about-cards { grid-template-columns: 1fr; }
+  .about-hero h1 { font-size: 1.75rem; }
+}
+</style>
+{% endblock %}

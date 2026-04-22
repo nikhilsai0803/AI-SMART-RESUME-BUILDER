@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — ResumeLens AI{% endblock %}
+{% block content %}
+
+<div class="dash-header">
+  <div>
+    <h1>Good {{ greeting }}, <span class="grad">{{ current_user.full_name.split()[0] }}</span> 👋</h1>
+    <p class="dim">Here's your career progress overview.</p>
+  </div>
+</div>
+
+<!-- Quick stats -->
+<div class="stat-row">
+  <div class="stat-card">
+    <div class="stat-icon accent-purple"><i class="fas fa-file-alt"></i></div>
+    <div class="stat-body">
+      <span class="stat-number">{{ global_stats.total_analyses or 0 }}</span>
+      <span class="stat-label">Analyses Done</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon accent-cyan"><i class="fas fa-chart-line"></i></div>
+    <div class="stat-body">
+      <span class="stat-number">{{ global_stats.best_ats or '—' }}</span>
+      <span class="stat-label">Best ATS Score</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon accent-green"><i class="fas fa-star"></i></div>
+    <div class="stat-body">
+      <span class="stat-number">{% set bs = global_stats.best_ats %}{% if bs and bs >= 80 %}Excellent{% elif bs and bs >= 60 %}Good{% elif bs %}Needs Work{% else %}—{% endif %}</span>
+      <span class="stat-label">Rating</span>
+    </div>
+  </div>
+</div>
+
+<!-- Quick actions -->
+<h2 class="section-heading">Quick Actions</h2>
+<div class="action-grid">
+  <a href="{{ url_for('analyze') }}" class="action-card action-primary">
+    <div class="action-icon"><i class="fas fa-file-search"></i></div>
+    <div class="action-text">
+      <strong>Analyze Resume</strong>
+      <span>Upload and get your ATS score instantly</span>
+    </div>
+    <i class="fas fa-arrow-right action-arrow"></i>
+  </a>
+  <a href="{{ url_for('profile') }}" class="action-card">
+    <div class="action-icon accent-cyan"><i class="fas fa-user-cog"></i></div>
+    <div class="action-text">
+      <strong>Update Profile</strong>
+      <span>Add GitHub, LinkedIn and more</span>
+    </div>
+    <i class="fas fa-arrow-right action-arrow"></i>
+  </a>
+</div>
+
+<!-- Profile social links -->
+{% if current_user.github or current_user.linkedin %}
+<div class="glass-card profile-links-card" style="margin-top:1.5rem">
+  <h3><i class="fas fa-link"></i> Your Profiles</h3>
+  <div class="profile-link-row">
+    {% if current_user.github %}
+    <a href="{{ current_user.github }}" target="_blank" rel="noopener" class="social-link-btn github-btn">
+      <i class="fab fa-github"></i> GitHub
+    </a>
+    {% endif %}
+    {% if current_user.linkedin %}
+    <a href="{{ current_user.linkedin }}" target="_blank" rel="noopener" class="social-link-btn linkedin-btn">
+      <i class="fab fa-linkedin"></i> LinkedIn
+    </a>
+    {% endif %}
+  </div>
+</div>
+{% else %}
+<div class="glass-card profile-links-card" style="margin-top:1.5rem">
+  <h3><i class="fas fa-link"></i> Link Your Profiles</h3>
+  <p class="dim" style="margin-bottom:1rem;font-size:.9rem">Add your GitHub and LinkedIn to showcase your work.</p>
+  <a href="{{ url_for('profile') }}" class="outline-btn"><i class="fas fa-plus"></i> Add Links</a>
+</div>
+{% endif %}
+
+<!-- Tips box -->
+<div class="glass-card" style="margin-top:1.5rem">
+  <h3><i class="fas fa-lightbulb text-warning"></i> Tips for a Great ATS Score</h3>
+  <ul class="tips-list" style="margin-top:.75rem">
+    <li><i class="fas fa-check"></i> Use standard section headings (Experience, Education, Skills)</li>
+    <li><i class="fas fa-check"></i> Include quantified achievements (e.g., "improved performance by 30%")</li>
+    <li><i class="fas fa-check"></i> Match keywords from the job description you're targeting</li>
+    <li><i class="fas fa-check"></i> Avoid tables, images, and graphics — ATS can't read them</li>
+    <li><i class="fas fa-check"></i> Include a LinkedIn URL in your contact section</li>
+  </ul>
+</div>
+
+{% endblock %}
